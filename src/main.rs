@@ -1,8 +1,8 @@
 use eframe::egui;
-pub mod models;
-mod file_finder;
+use egui::{CentralPanel, SidePanel};
 
-use models::graphic_file;
+mod file_finder;
+pub mod models;
 
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
@@ -18,39 +18,39 @@ fn main() -> eframe::Result<()> {
 }
 
 struct MyApp {
-    name: String,
-    age: u32,
+    vault_path: String,
 }
 
 impl Default for MyApp {
     fn default() -> Self {
         Self {
-            name: "World".to_owned(),
-            age: 25,
+            vault_path: "/home/remy/Pictures/images/svg".to_owned(),
         }
     }
 }
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Hello from Egui!");
-            ui.separator();
+        // side panel to access menus
+        SidePanel::left("my_left_panel")
+            .max_width(30.0)
+            .frame(egui::Frame::default().inner_margin(egui::Margin::same(8.0)))
+            .show(ctx, |ui| {
+                // view my svgs
+                if ui.button("🎨").on_hover_text("View SVGs").clicked() {
+                    ui.add_space(4.0);
+                }
 
-            ui.horizontal(|ui| {
-                ui.label("Your name: ");
-                ui.text_edit_singleline(&mut self.name);
+                // user settings
+                if ui.button("⚙").on_hover_text("Settings").clicked() {}
             });
 
-            ui.add(egui::Slider::new(&mut self.age, 0..=120).text("age"));
-
-            if ui.button("Click me!").clicked() {
-                println!("Button clicked!");
-            }
-
-            ui.separator();
-
-            ui.label(format!("Hello, {}! You are {} years old.", self.name, self.age));
+        // main content to display app
+        CentralPanel::default().show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Filepath ");
+                ui.text_edit_singleline(&mut self.vault_path);
+            });
         });
     }
 }
