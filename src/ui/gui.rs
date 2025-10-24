@@ -1,9 +1,9 @@
 use crate::models::file_items::FileSystemItem;
 use crate::utils::{file_finder, config::AppConfig};
-use crate::ui::{code_editor, toolbar};
+use crate::ui::{code_editor, toolbar, gallery};
 use eframe::egui;
 use eframe::glow::Context;
-use egui::{CentralPanel, ScrollArea, Vec2};
+use egui::{CentralPanel, Vec2};
 use std::path::{Path, PathBuf};
 use arboard::Clipboard;
 use std::fs;
@@ -14,13 +14,13 @@ pub enum View {
 }
 
 pub struct MyApp {
-    pub(crate) vault_path: String,           // Saved home path
-    current_path: String,          // Current browsing path
+    pub(crate) vault_path: String,
+    pub(crate) current_path: String,
     pub(crate) vault_path_input: String,
-    current_items: Vec<FileSystemItem>,
+    pub(crate) current_items: Vec<FileSystemItem>,
     pub(crate) selected_svg: Option<PathBuf>,
-    pub(crate) svg_code: String,              // SVG code being edited
-    error_message: Option<String>,
+    pub(crate) svg_code: String,
+    pub(crate) error_message: Option<String>,
     pub(crate) current_view: View,
     clipboard: Clipboard,
 }
@@ -50,13 +50,6 @@ impl MyApp {
     fn navigate_to(&mut self, path: String) {
         self.current_path = path;
         self.refresh_directory();
-    }
-
-    fn navigate_back(&mut self) {
-        let current = Path::new(&self.current_path);
-        if let Some(parent) = current.parent() {
-            self.navigate_to(parent.to_string_lossy().to_string());
-        }
     }
 
     fn load_svg(&mut self, path: &PathBuf) {
@@ -115,10 +108,9 @@ impl Default for MyApp {
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // TOOL SECTION
         toolbar::render(self, ctx);
 
-        // In the update function, replace the RIGHT PANEL section with:
+        // Code editor on the right when SVG is selected
         if let View::Gallery = self.current_view {
             if self.selected_svg.is_some() {
                 code_editor::render(self, ctx);
@@ -146,95 +138,12 @@ impl eframe::App for MyApp {
                     }
                 }
                 View::Gallery => {
-                    ui.horizontal(|ui| {
-                        // Back button
-                        if ui.button("⬅").clicked() {
-                            self.navigate_back();
-                        }
+                    let (navigate_to, load_svg) = gallery::render(self, ui);
 
-                        ui.label(format!("{}", self.current_path));
-                    });
-
-                    ui.separator();
-
-                    if let Some(error) = &self.error_message {
-                        let color = if error.starts_with("✓") {
-                            egui::Color32::GREEN
-                        } else {
-                            egui::Color32::RED
-                        };
-                        ui.colored_label(color, error);
-                    }
-
-                    // File browser
-                    let mut navigate_to: Option<String> = None;
-                    let mut load_svg: Option<PathBuf> = None;
-
-                    ScrollArea::vertical().show(ui, |ui| {
-                        egui::Grid::new("file_grid")
-                            .num_columns(4)
-                            .spacing([10.0, 10.0])
-                            .show(ui, |ui| {
-                                for (idx, item) in self.current_items.iter().enumerate() {
-                                    match item {
-                                        FileSystemItem::Directory { name, path } => {
-                                            let button_response = ui
-                                                .vertical(|ui| {
-                                                    // Fixed size container for folder icon
-                                                    ui.set_width(Self::THUMBNAIL_SIZE.x);
-                                                    ui.set_height(Self::THUMBNAIL_SIZE.y);
-
-                                                    let button = ui.button(
-                                                        egui::RichText::new("📁")
-                                                            .size(Self::THUMBNAIL_SIZE.y * 0.6),
-                                                    );
-                                                    ui.label(name);
-                                                    button
-                                                })
-                                                .inner;
-
-                                            if button_response.double_clicked() {
-                                                navigate_to = Some(path.to_string_lossy().to_string());
-                                            }
-                                        }
-                                        FileSystemItem::SvgFile { name, path } => {
-                                            ui.vertical(|ui| {
-                                                let img_uri = format!("file://{}", path.display());
-                                                let button = ui.add(egui::ImageButton::new(
-                                                    egui::Image::new(img_uri).rounding(10.0)
-                                                        .fit_to_exact_size(Self::THUMBNAIL_SIZE),
-                                                ));
-
-                                                if button.clicked() {
-                                                    load_svg = Some(path.clone());
-                                                }
-
-                                                // Right click context menu
-                                                button.context_menu(|ui| {
-                                                    if ui.button("📝 Edit").clicked() {
-                                                        load_svg = Some(path.clone());
-                                                        ui.close_menu();
-                                                    }
-                                                });
-
-                                                ui.label(name);
-                                            });
-                                        }
-                                    }
-
-                                    if (idx + 1) % 4 == 0 {
-                                        ui.end_row();
-                                    }
-                                }
-                            });
-                    });
-
-                    // Handle navigation outside the grid
                     if let Some(new_path) = navigate_to {
                         self.navigate_to(new_path);
                     }
 
-                    // Handle load SVG outside the grid
                     if let Some(path) = load_svg {
                         self.load_svg(&path);
                     }
