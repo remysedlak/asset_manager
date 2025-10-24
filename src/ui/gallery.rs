@@ -9,6 +9,7 @@ use crate::models::gui::View;
 pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<PathBuf>) {
     let mut navigate_to: Option<String> = None;
     let mut load_svg: Option<PathBuf> = None;
+    let mut pending_error: Option<String> = None;
 
     // Determine the root path based on current view
     let root_path = match app.current_view {
@@ -37,6 +38,14 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
 
     ui.separator();
 
+    // Check if message should be cleared
+    if let Some(error_time) = app.error_message_time {
+        if error_time.elapsed().as_secs() >= 3 {
+            app.error_message = None;
+            app.error_message_time = None;
+        }
+    }
+
     if let Some(error) = &app.error_message {
         let color = if error.starts_with("✓") {
             egui::Color32::GREEN
@@ -57,7 +66,7 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
             ui.add_space(10.0);
 
             egui::Frame::none()
-                .inner_margin(egui::Margin::symmetric(20.0, 10.0))
+                .inner_margin(egui::Margin::symmetric(20, 10))
                 .show(ui, |ui| {
                     egui::Grid::new("file_grid")
                         .num_columns(num_columns)
@@ -106,8 +115,8 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                                 }
                                                 if ui.button("Copy File").clicked() {
                                                     match file_actions::copy_file_to_clipboard(path) {
-                                                        Ok(_) => app.error_message = Some("✓ File copied to clipboard".to_string()),
-                                                        Err(e) => app.error_message = Some(format!("Failed to copy file: {}", e)),
+                                                        Ok(_) => pending_error = Some("✓ File copied to clipboard".to_string()),
+                                                        Err(e) => pending_error = Some(format!("Failed to copy file: {}", e)),
                                                     }
                                                     ui.close_menu();
                                                 }
@@ -122,6 +131,7 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                                     ui.close_menu();
                                                 }
                                                 if ui.button("Delete").clicked() {
+                                                    app.delete_file_path = Some(path.clone());
                                                     ui.close_menu();
                                                 }
                                             });
@@ -152,8 +162,8 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                             button.context_menu(|ui| {
                                                 if ui.button("Copy File").clicked() {
                                                     match file_actions::copy_file_to_clipboard(path) {
-                                                        Ok(_) => app.error_message = Some("✓ File copied to clipboard".to_string()),
-                                                        Err(e) => app.error_message = Some(format!("Failed to copy file: {}", e)),
+                                                        Ok(_) => pending_error = Some("✓ File copied to clipboard".to_string()),
+                                                        Err(e) => pending_error = Some(format!("Failed to copy file: {}", e)),
                                                     }
                                                     ui.close_menu();
                                                 }
@@ -168,6 +178,7 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                                     ui.close_menu();
                                                 }
                                                 if ui.button("Delete").clicked() {
+                                                    app.delete_file_path = Some(path.clone());
                                                     ui.close_menu();
                                                 }
                                             });
@@ -184,6 +195,11 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                         });
                 });
         });
+
+    // Set pending error message after all closures are done
+    if let Some(error) = pending_error {
+        app.set_error_message(error);
+    }
 
     (navigate_to, load_svg)
 }

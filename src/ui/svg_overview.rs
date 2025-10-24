@@ -1,6 +1,7 @@
 use crate::ui::gui::MyApp;
 use crate::utils::svg_parser;
 use egui::{ScrollArea, SidePanel, RichText, Align};
+use crate::models::gui::View;
 
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {
     SidePanel::right("side_panel")
@@ -10,7 +11,7 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
         .resizable(true)
         .frame(
             egui::Frame::default()
-                .inner_margin(egui::Margin::same(16.0))
+                .inner_margin(egui::Margin::same(16))
                 .fill(egui::Color32::from_rgb(30, 29, 25))
         )
         .show(ctx, |ui| {
@@ -21,9 +22,19 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                     ui.horizontal(|ui| {
                         ui.heading(RichText::new("Editor").size(18.0));
                         ui.with_layout(egui::Layout::right_to_left(Align::Center), |ui| {
+
+                            // close sidebar
                             if ui.button(RichText::new("―").size(14.0)).clicked() {
+
                                 app.selected_svg = None;
                                 app.svg_code.clear();
+                            }
+
+                            // open code editor
+                            if ui.button(RichText::new("</>").size(14.0)).clicked() {
+                                // DON'T clear the selected_svg and svg_code
+                                // Just switch the view
+                                app.current_view = View::Editor;
                             }
                         });
                     });
@@ -54,10 +65,10 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                             ui.label(RichText::new("SVG Info:").strong().size(14.0));
                             ui.add_space(4.0);
 
-                            egui::Frame::none()
+                            egui::Frame::new()
                                 .fill(egui::Color32::from_rgb(35, 39, 42))
-                                .inner_margin(egui::Margin::same(12.0))
-                                .rounding(6.0)
+                                .inner_margin(egui::Margin::same(12))
+                                .corner_radius(6.0)
                                 .show(ui, |ui| {
                                     ui.spacing_mut().item_spacing.y = 6.0;
 
@@ -108,9 +119,9 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                                                 for (idx, color) in svg_info.colors_used.iter().take(12).enumerate() {
                                                     let color32 = egui::Color32::from_rgb(color.red, color.green, color.blue);
 
-                                                    let color_box = egui::Frame::none()
+                                                    let color_box = egui::Frame::new()
                                                         .fill(color32)
-                                                        .rounding(4.0)
+                                                        .corner_radius(4.0)
                                                         .stroke(egui::Stroke::new(1.0, egui::Color32::from_rgb(100, 100, 100)))
                                                         .show(ui, |ui| {
                                                             ui.set_min_size(egui::Vec2::new(24.0, 24.0));
@@ -145,10 +156,10 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                     ui.label(RichText::new("Preview:").strong().size(14.0));
                     ui.add_space(4.0);
 
-                    egui::Frame::none()
+                    egui::Frame::new()
                         .fill(egui::Color32::from_rgb(35, 39, 42))
-                        .inner_margin(egui::Margin::same(16.0))
-                        .rounding(6.0)
+                        .inner_margin(egui::Margin::same(16))
+                        .corner_radius(6.0)
                         .show(ui, |ui| {
                             ScrollArea::both()
                                 .id_salt("preview_scroll")
@@ -172,10 +183,10 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                     ui.label(RichText::new("Code:").strong().size(14.0));
                     ui.add_space(4.0);
 
-                    egui::Frame::none()
+                    egui::Frame::new()
                         .fill(egui::Color32::from_rgb(32, 34, 37))
-                        .inner_margin(egui::Margin::same(8.0))
-                        .rounding(6.0)
+                        .inner_margin(egui::Margin::same(8))
+                        .corner_radius(6.0)
                         .show(ui, |ui| {
                             ScrollArea::vertical()
                                 .id_salt("code_editor_scroll")

@@ -1,5 +1,5 @@
 use crate::models::file_items::FileSystemItem;
-use crate::ui::{code_editor, gallery, toolbar, settings};
+use crate::ui::{editor, gallery, toolbar, settings};
 use crate::utils::{config::AppConfig};
 use arboard::Clipboard;
 use eframe::egui;
@@ -7,9 +7,10 @@ use eframe::glow::Context;
 use egui::{CentralPanel, RichText, Vec2};
 use std::fs;
 use std::path::{PathBuf};
+use std::time::Instant;
 use crate::utils::file_finder::{scan_directory, FileFilter};
 use crate::models::gui::View;
-
+use crate::ui;
 
 pub struct MyApp {
     pub(crate) vault_path: String,
@@ -21,11 +22,14 @@ pub struct MyApp {
     pub(crate) selected_svg: Option<PathBuf>,
     pub(crate) svg_code: String,
     pub(crate) error_message: Option<String>,
+    pub(crate) error_message_time: Option<Instant>,
     pub(crate) rename_file_path: Option<PathBuf>,
     pub(crate) rename_input: String,
     pub(crate) rename_just_opened: bool,
     pub(crate) current_view: View,
+    pub(crate) delete_file_path: Option<PathBuf>,
     clipboard: Clipboard,
+    pub(crate) code: String,
 }
 
 impl MyApp {
@@ -37,6 +41,11 @@ impl MyApp {
             font_path: self.font_path.clone()
         };
         config.save();
+    }
+
+    pub(crate) fn set_error_message(&mut self, message: String) {
+        self.error_message = Some(message);
+        self.error_message_time = Some(Instant::now());
     }
 
     pub fn refresh_directory(&mut self) {
@@ -121,11 +130,14 @@ impl Default for MyApp {
             selected_svg: None,
             svg_code: String::new(),
             error_message: None,
+            error_message_time: None,
             current_view: View::Gallery,
             rename_input: String::new(),
             rename_just_opened: false,
+            delete_file_path: None,
             rename_file_path: None,
             clipboard: Clipboard::new().unwrap(),
+            code: String::from("// Start coding here\nfn main() {\n    println!(\"Hello, world!\");\n}"),
         }
     }
 }
@@ -138,10 +150,14 @@ impl eframe::App for MyApp {
             crate::ui::popups::rename_file::render(self, ctx);
         }
 
+        if self.delete_file_path.is_some() {
+            crate::ui::popups::delete_file::render(self, ctx);
+        }
+
         // Code editor on the right when SVG is selected
         if let View::Gallery = self.current_view {
             if self.selected_svg.is_some() {
-                code_editor::render(self, ctx);
+                crate::ui::svg_overview::render(self, ctx); // Use svg_editor instead
             }
         }
 
@@ -174,6 +190,16 @@ impl eframe::App for MyApp {
                 ui.vertical(|ui|{
                     ui.label(RichText::from("Controls:").size(15.0));
                 });
+            }
+            View::Editor => {
+                // If there's an SVG selected, make sure the code is loaded
+                if self.selected_svg.is_some() && self.svg_code.is_empty() {
+                    // This shouldn't happen, but just in case
+                    if let Some(path) = &self.selected_svg.clone() {
+                        self.load_svg(&path);
+                    }
+                }
+                editor::render_editor(self, ui);
             }
         });
     }

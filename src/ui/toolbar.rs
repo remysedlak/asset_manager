@@ -6,9 +6,14 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
     SidePanel::left("my_left_panel")
         .exact_width(60.0)
         .frame(egui::Frame::default()
-            .inner_margin(egui::Margin::same(5.0))
+            .inner_margin(egui::Margin::same(5))
             .fill(ctx.style().visuals.panel_fill))
         .show(ctx, |ui| {
+            // Set button rounding
+            ui.style_mut().visuals.widgets.inactive.corner_radius = egui::CornerRadius::same(10);
+            ui.style_mut().visuals.widgets.hovered.corner_radius = egui::CornerRadius::same(10);
+            ui.style_mut().visuals.widgets.active.corner_radius = egui::CornerRadius::same(10);
+
             ui.vertical_centered(|ui| {
                 ui.add_space(10.0);
 
@@ -48,7 +53,7 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                 if ui
                     .add_sized(
                         [40.0, 40.0],
-                        egui::Button::new(RichText::new("⚙").size(28.0)),
+                        egui::Button::new(RichText::new("⚙").size(20.0)),
                     )
                     .on_hover_text("Settings")
                     .clicked()

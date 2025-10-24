@@ -8,7 +8,7 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) {
 
     // Add padding and center content
     egui::Frame::none()
-        .inner_margin(egui::Margin::symmetric(40.0, 30.0))
+        .inner_margin(egui::Margin::symmetric(40, 30))
         .show(ui, |ui| {
             // Header
             ui.vertical_centered(|ui| {
@@ -64,7 +64,7 @@ fn render_path_section(
 
     egui::Frame::none()
         .fill(egui::Color32::from_rgb(35, 39, 42))
-        .inner_margin(egui::Margin::same(20.0))
+        .inner_margin(egui::Margin::same(20))
         .rounding(8.0)
         .show(ui, |ui| {
             // Section title

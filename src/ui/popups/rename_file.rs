@@ -4,6 +4,9 @@ use std::fs;
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {
     let mut should_close = false;
     let mut should_rename = false;
+    let mut old_path_clone = None;
+    let mut new_path_clone = None;
+    let mut new_name_clone = None;
 
     egui::Window::new("Rename File")
         .resizable(false)
@@ -40,7 +43,12 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                         match fs::rename(path, &new_path) {
                             Ok(_) => {
                                 app.error_message = Some(format!("✓ Renamed to {}", app.rename_input));
-                                app.refresh_directory();
+
+                                // Store the values to update after the closure
+                                old_path_clone = Some(path.clone());
+                                new_path_clone = Some(new_path);
+                                new_name_clone = Some(app.rename_input.clone());
+
                                 should_close = true;
                             }
                             Err(e) => {
@@ -52,9 +60,47 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
             }
         });
 
+    // Update the renamed item after the window closure
+    if let (Some(old_path), Some(new_path), Some(new_name)) = (old_path_clone, new_path_clone, new_name_clone) {
+        update_renamed_item(app, &old_path, &new_path, &new_name);
+    }
+
     if should_close {
         app.rename_file_path = None;
         app.rename_input.clear();
         app.rename_just_opened = false;
+    }
+}
+
+fn update_renamed_item(app: &mut MyApp, old_path: &std::path::Path, new_path: &std::path::Path, new_name: &str) {
+    use crate::models::file_items::FileSystemItem;
+
+    // Find and update the item in current_items
+    for item in &mut app.current_items {
+        match item {
+            FileSystemItem::SvgFile { name, path } if path == old_path => {
+                *name = new_name.to_string();
+                *path = new_path.to_path_buf();
+                break;
+            }
+            FileSystemItem::FontFile { name, path } if path == old_path => {
+                *name = new_name.to_string();
+                *path = new_path.to_path_buf();
+                break;
+            }
+            FileSystemItem::Directory { name, path } if path == old_path => {
+                *name = new_name.to_string();
+                *path = new_path.to_path_buf();
+                break;
+            }
+            _ => {}
+        }
+    }
+
+    // Also update selected_svg if it was the renamed file
+    if let Some(selected) = &app.selected_svg {
+        if selected == old_path {
+            app.selected_svg = Some(new_path.to_path_buf());
+        }
     }
 }

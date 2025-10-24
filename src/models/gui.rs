@@ -3,4 +3,5 @@ pub enum View {
     Settings,
     Fonts,
     Help,
+    Editor,
 }

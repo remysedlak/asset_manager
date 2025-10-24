@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use eframe::egui;
 use egui_extras::install_image_loaders;
 
@@ -23,7 +24,7 @@ fn main() -> eframe::Result<()> {
             // Load your custom font
             fonts.font_data.insert(
                 "my_font".to_owned(),
-                egui::FontData::from_static(include_bytes!("../assets/clash.ttf"))
+                Arc::from(egui::FontData::from_static(include_bytes!("../assets/clash.ttf")))
             );
 
             // Set as primary font for proportional text
