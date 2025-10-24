@@ -5,7 +5,9 @@ use eframe::glow::Context;
 use egui::{CentralPanel, ScrollArea, SidePanel, Vec2};
 use std::path::{Path, PathBuf};
 use arboard::Clipboard;
+use ui::code_editor;
 use std::fs;
+use crate::ui;
 
 pub enum View {
     Gallery,
@@ -17,14 +19,15 @@ pub struct MyApp {
     current_path: String,          // Current browsing path
     vault_path_input: String,
     current_items: Vec<FileSystemItem>,
-    selected_svg: Option<PathBuf>,
+    pub(crate) selected_svg: Option<PathBuf>,
+    pub(crate) svg_code: String,              // SVG code being edited
     error_message: Option<String>,
     current_view: View,
     clipboard: Clipboard,
 }
 
 impl MyApp {
-    const THUMBNAIL_SIZE: Vec2 = Vec2::new(80.0, 80.0);
+    pub(crate) const THUMBNAIL_SIZE: Vec2 = Vec2::new(80.0, 80.0);
     const PREVIEW_SIZE: f32 = 300.0;
 
     fn save_config(&self) {
@@ -58,18 +61,36 @@ impl MyApp {
         }
     }
 
-    fn copy_svg_to_clipboard(&mut self, path: &PathBuf) {
+    fn load_svg(&mut self, path: &PathBuf) {
         match fs::read_to_string(path) {
             Ok(content) => {
-                if let Err(e) = self.clipboard.set_text(content) {
-                    self.error_message = Some(format!("Failed to copy: {}", e));
-                } else {
-                    self.error_message = Some("Copied to clipboard!".to_string());
-                }
+                self.svg_code = content;
+                self.selected_svg = Some(path.clone());
             }
             Err(e) => {
                 self.error_message = Some(format!("Failed to read file: {}", e));
             }
+        }
+    }
+
+    pub(crate) fn save_svg(&mut self) {
+        if let Some(path) = &self.selected_svg {
+            match fs::write(path, &self.svg_code) {
+                Ok(_) => {
+                    self.error_message = Some("✓ Saved!".to_string());
+                }
+                Err(e) => {
+                    self.error_message = Some(format!("Failed to save: {}", e));
+                }
+            }
+        }
+    }
+
+    pub(crate) fn copy_svg_to_clipboard(&mut self) {
+        if let Err(e) = self.clipboard.set_text(self.svg_code.clone()) {
+            self.error_message = Some(format!("Failed to copy: {}", e));
+        } else {
+            self.error_message = Some("✓ Copied to clipboard!".to_string());
         }
     }
 }
@@ -86,6 +107,7 @@ impl Default for MyApp {
             vault_path_input: vault_path,
             current_items,
             selected_svg: None,
+            svg_code: String::new(),
             error_message: None,
             current_view: View::Gallery,
             clipboard: Clipboard::new().unwrap(),
@@ -126,36 +148,10 @@ impl eframe::App for MyApp {
                 }
             });
 
-        // RIGHT PANEL - Preview
+        // In the update function, replace the RIGHT PANEL section with:
         if let View::Gallery = self.current_view {
-            if let Some(svg_path) = &self.selected_svg.clone() {
-                SidePanel::right("side_panel")
-                    .min_width(320.0)
-                    .frame(
-                        egui::Frame::default()
-                            .inner_margin(egui::Margin::same(8.0))
-                            .fill(egui::Color32::WHITE)  // Add this line
-                    )
-                    .show(ctx, |ui| {
-                        ui.heading("Preview");
-                        ui.separator();
-
-                        ui.label(format!("File: {}", svg_path.file_name().unwrap().to_string_lossy()));
-
-                        if ui.button("</> Copy Code").clicked() {
-                            self.copy_svg_to_clipboard(svg_path);
-                        }
-
-                        ui.separator();
-
-                        let img_uri = format!("file://{}", svg_path.display());
-                        ui.add(
-                            egui::Image::new(img_uri)
-                                .max_width(Self::PREVIEW_SIZE)
-                                .max_height(Self::PREVIEW_SIZE)
-                                .bg_fill(egui::Color32::WHITE)  // Also add white background to the image itself
-                        );
-                    });
+            if self.selected_svg.is_some() {
+                code_editor::render(self, ctx);
             }
         }
 
@@ -202,7 +198,7 @@ impl eframe::App for MyApp {
 
                     // File browser
                     let mut navigate_to: Option<String> = None;
-                    let mut copy_svg: Option<PathBuf> = None;
+                    let mut load_svg: Option<PathBuf> = None;
 
                     ScrollArea::vertical().show(ui, |ui| {
                         egui::Grid::new("file_grid")
@@ -235,18 +231,18 @@ impl eframe::App for MyApp {
                                             ui.vertical(|ui| {
                                                 let img_uri = format!("file://{}", path.display());
                                                 let button = ui.add(egui::ImageButton::new(
-                                                    egui::Image::new(img_uri)
+                                                    egui::Image::new(img_uri).rounding(10.0)
                                                         .fit_to_exact_size(Self::THUMBNAIL_SIZE),
                                                 ));
 
                                                 if button.clicked() {
-                                                    self.selected_svg = Some(path.clone());
+                                                    load_svg = Some(path.clone());
                                                 }
 
                                                 // Right click context menu
                                                 button.context_menu(|ui| {
-                                                    if ui.button("</> Copy Code").clicked() {
-                                                        copy_svg = Some(path.clone());
+                                                    if ui.button("📝 Edit").clicked() {
+                                                        load_svg = Some(path.clone());
                                                         ui.close_menu();
                                                     }
                                                 });
@@ -268,9 +264,9 @@ impl eframe::App for MyApp {
                         self.navigate_to(new_path);
                     }
 
-                    // Handle copy outside the grid
-                    if let Some(path) = copy_svg {
-                        self.copy_svg_to_clipboard(&path);
+                    // Handle load SVG outside the grid
+                    if let Some(path) = load_svg {
+                        self.load_svg(&path);
                     }
                 }
             }

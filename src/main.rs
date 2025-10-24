@@ -3,7 +3,7 @@ use egui_extras::install_image_loaders;
 
 mod models;
 mod utils;
-mod gui;
+mod ui;
 
 fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
@@ -15,8 +15,8 @@ fn main() -> eframe::Result<()> {
         "Asset Manager",
         options,
         Box::new(|cc| {
-            install_image_loaders(&cc.egui_ctx); // egui image loader functionality
-            Ok(Box::new(gui::MyApp::default()))
+            install_image_loaders(&cc.egui_ctx);
+            Ok(Box::new(ui::gui::MyApp::default()))
         }),
     )
 }
