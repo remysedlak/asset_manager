@@ -8,3 +8,6 @@ eframe = "0.29"
 egui = "0.29"
 egui_extras = {version= "0.29", features = ["all_loaders"]}
 scan_dir = "0.3.3"
+serde = { version = "1.0.228", features = ["derive"] }
+dirs = "6.0.0"
+serde_json = "1.0.145"
