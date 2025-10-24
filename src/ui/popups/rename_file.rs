@@ -1,26 +1,42 @@
+use crate::egui::text::CCursorRange;
+use crate::egui::text::CCursor;
 use crate::ui::gui::MyApp;
+use crate::models::file_items::FileSystemItem;
 use std::fs;
 
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {
     let mut should_close = false;
     let mut should_rename = false;
-    let mut old_path_clone = None;
-    let mut new_path_clone = None;
-    let mut new_name_clone = None;
+    let mut rename_result: Option<(std::path::PathBuf, std::path::PathBuf, String)> = None;
 
     egui::Window::new("Rename File")
         .resizable(false)
         .collapsible(false)
         .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
         .show(ctx, |ui| {
-            if let Some(path) = &app.rename_file_path {
+            // Clone the path at the start to avoid borrowing issues
+            let path = app.rename_file_path.clone();
+
+            if let Some(path) = path {
                 ui.label("Filename:");
 
                 let response = ui.text_edit_singleline(&mut app.rename_input);
 
-                // Auto-focus the text field when window opens
+                // Auto-focus and position cursor before the extension when window opens
                 if app.rename_just_opened {
                     response.request_focus();
+
+                    // Position cursor before the file extension
+                    if let Some(extension_pos) = app.rename_input.rfind('.') {
+                        if let Some(mut state) = egui::TextEdit::load_state(ui.ctx(), response.id) {
+                            let cursor_range = CCursorRange::one(
+                                CCursor::new(extension_pos)
+                            );
+                            state.cursor.set_char_range(Some(cursor_range));
+                            state.store(ui.ctx(), response.id);
+                        }
+                    }
+
                     app.rename_just_opened = false;
                 }
 
@@ -40,19 +56,16 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                     if let Some(parent) = path.parent() {
                         let new_path = parent.join(&app.rename_input);
 
-                        match fs::rename(path, &new_path) {
+                        match fs::rename(&path, &new_path) {
                             Ok(_) => {
-                                app.error_message = Some(format!("✓ Renamed to {}", app.rename_input));
-
-                                // Store the values to update after the closure
-                                old_path_clone = Some(path.clone());
-                                new_path_clone = Some(new_path);
-                                new_name_clone = Some(app.rename_input.clone());
-
+                                app.set_error_message(format!("✅ Renamed to {}", app.rename_input));
                                 should_close = true;
+
+                                // Store the rename info to update after the window closes
+                                rename_result = Some((path.clone(), new_path, app.rename_input.clone()));
                             }
                             Err(e) => {
-                                app.error_message = Some(format!("Failed to rename: {}", e));
+                                app.set_error_message(format!("Failed to rename: {}", e));
                             }
                         }
                     }
@@ -60,47 +73,41 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
             }
         });
 
-    // Update the renamed item after the window closure
-    if let (Some(old_path), Some(new_path), Some(new_name)) = (old_path_clone, new_path_clone, new_name_clone) {
-        update_renamed_item(app, &old_path, &new_path, &new_name);
+    // Update the specific item after the window closes
+    if let Some((old_path, new_path, new_name)) = rename_result {
+        // Find and update the item in current_items
+        for item in &mut app.current_items {
+            match item {
+                FileSystemItem::SvgFile { name, path } if *path == old_path => {
+                    *name = new_name.clone();
+                    *path = new_path.clone();
+                    break;
+                }
+                FileSystemItem::FontFile { name, path } if *path == old_path => {
+                    *name = new_name.clone();
+                    *path = new_path.clone();
+                    break;
+                }
+                FileSystemItem::Directory { name, path } if *path == old_path => {
+                    *name = new_name;
+                    *path = new_path.clone();
+                    break;
+                }
+                _ => {}
+            }
+        }
+
+        // Also update selected_svg if it was the renamed file
+        if let Some(selected) = &app.selected_svg {
+            if *selected == old_path {
+                app.selected_svg = Some(new_path);
+            }
+        }
     }
 
     if should_close {
         app.rename_file_path = None;
         app.rename_input.clear();
         app.rename_just_opened = false;
-    }
-}
-
-fn update_renamed_item(app: &mut MyApp, old_path: &std::path::Path, new_path: &std::path::Path, new_name: &str) {
-    use crate::models::file_items::FileSystemItem;
-
-    // Find and update the item in current_items
-    for item in &mut app.current_items {
-        match item {
-            FileSystemItem::SvgFile { name, path } if path == old_path => {
-                *name = new_name.to_string();
-                *path = new_path.to_path_buf();
-                break;
-            }
-            FileSystemItem::FontFile { name, path } if path == old_path => {
-                *name = new_name.to_string();
-                *path = new_path.to_path_buf();
-                break;
-            }
-            FileSystemItem::Directory { name, path } if path == old_path => {
-                *name = new_name.to_string();
-                *path = new_path.to_path_buf();
-                break;
-            }
-            _ => {}
-        }
-    }
-
-    // Also update selected_svg if it was the renamed file
-    if let Some(selected) = &app.selected_svg {
-        if selected == old_path {
-            app.selected_svg = Some(new_path.to_path_buf());
-        }
     }
 }

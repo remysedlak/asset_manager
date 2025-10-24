@@ -1,9 +1,15 @@
 use scan_dir::ScanDir;
 use crate::models::FileSystemItem;
+use std::fs;
 
 pub enum FileFilter {
     Svg,
     Font,
+}
+
+// Helper function to check if a file has valid UTF-8 content
+fn is_valid_utf8_file(path: &std::path::PathBuf) -> bool {
+    fs::read_to_string(path).is_ok()
 }
 
 pub fn scan_directory(path: &str, filter: FileFilter) -> Result<Vec<FileSystemItem>, std::io::Error> {
@@ -25,10 +31,14 @@ pub fn scan_directory(path: &str, filter: FileFilter) -> Result<Vec<FileSystemIt
             ScanDir::files().read(path, |iter| {
                 for (entry, name) in iter {
                     if name.ends_with(".svg") {
-                        items.push(FileSystemItem::SvgFile {
-                            name: name.clone(),
-                            path: entry.path(),
-                        });
+                        // Only include SVG files with valid UTF-8 content
+                        if is_valid_utf8_file(&entry.path()) {
+                            items.push(FileSystemItem::SvgFile {
+                                name: name.clone(),
+                                path: entry.path(),
+                            });
+                        }
+                        // Silently skip files with invalid UTF-8
                     }
                 }
             }).unwrap();

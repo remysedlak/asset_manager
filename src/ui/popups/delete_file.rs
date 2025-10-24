@@ -10,7 +10,10 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
         .collapsible(false)
         .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
         .show(ctx, |ui| {
-            if let Some(path) = &app.delete_file_path {
+            // Clone the path at the start to avoid borrowing issues
+            let path = app.delete_file_path.clone();
+
+            if let Some(path) = path {
                 ui.vertical_centered(|ui| {
                     ui.add_space(10.0);
 
@@ -56,32 +59,35 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
             }
         });
 
+    // Clone path again for the deletion logic
+    let path_to_delete = app.delete_file_path.clone();
+
     if should_delete {
-        if let Some(path) = &app.delete_file_path {
-            match fs::remove_file(path) {
+        if let Some(path) = path_to_delete {
+            match fs::remove_file(&path) {
                 Ok(_) => {
-                    app.error_message = Some("✓ File deleted successfully".to_string());
+                    app.set_error_message("✅ File deleted successfully".to_string());
 
                     // Remove the item from current_items
                     app.current_items.retain(|item| {
                         use crate::models::file_items::FileSystemItem;
                         match item {
-                            FileSystemItem::SvgFile { path: p, .. } => p != path,
-                            FileSystemItem::FontFile { path: p, .. } => p != path,
-                            FileSystemItem::Directory { path: p, .. } => p != path,
+                            FileSystemItem::SvgFile { path: p, .. } => p != &path,
+                            FileSystemItem::FontFile { path: p, .. } => p != &path,
+                            FileSystemItem::Directory { path: p, .. } => p != &path,
                         }
                     });
 
                     // Clear selected_svg if it was deleted
                     if let Some(selected) = &app.selected_svg {
-                        if selected == path {
+                        if selected == &path {
                             app.selected_svg = None;
                             app.svg_code.clear();
                         }
                     }
                 }
                 Err(e) => {
-                    app.error_message = Some(format!("Failed to delete: {}", e));
+                    app.set_error_message(format!("Failed to delete: {}", e));
                 }
             }
         }

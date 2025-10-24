@@ -7,7 +7,7 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) {
     let mut font_save_clicked = false;
 
     // Add padding and center content
-    egui::Frame::none()
+    egui::Frame::new()
         .inner_margin(egui::Margin::symmetric(40, 30))
         .show(ui, |ui| {
             // Header
@@ -62,10 +62,10 @@ fn render_path_section(
 ) -> bool {
     let mut save_clicked = false;
 
-    egui::Frame::none()
+    egui::Frame::new()
         .fill(egui::Color32::from_rgb(35, 39, 42))
         .inner_margin(egui::Margin::same(20))
-        .rounding(8.0)
+        .corner_radius(8.0)
         .show(ui, |ui| {
             // Section title
             ui.label(RichText::new(title).size(20.0).strong());

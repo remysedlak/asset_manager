@@ -10,6 +10,9 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
     let mut navigate_to: Option<String> = None;
     let mut load_svg: Option<PathBuf> = None;
     let mut pending_error: Option<String> = None;
+    let mut pending_edit: Option<PathBuf> = None;
+    let mut pending_rename: Option<(PathBuf, String)> = None;
+    let mut pending_delete: Option<PathBuf> = None;
 
     // Determine the root path based on current view
     let root_path = match app.current_view {
@@ -18,16 +21,13 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
         _ => &app.current_path,
     };
 
-    // Check if we're at the root directory
     let is_at_root = app.current_path == *root_path;
 
-    // Center the grid content
+    // Header
     ui.horizontal(|ui| {
-        // Only show back button if not at root
         if !is_at_root {
             if ui.button(RichText::new("⬅").size(20.0)).clicked() {
                 let parent = get_parent_path(&app.current_path);
-                // Don't go above the root path
                 if parent.starts_with(root_path) {
                     navigate_to = Some(parent);
                 }
@@ -38,16 +38,16 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
 
     ui.separator();
 
-    // Check if message should be cleared
+    // Status message
     if let Some(error_time) = app.error_message_time {
-        if error_time.elapsed().as_secs() >= 3 {
+        if error_time.elapsed().as_secs() >= 1 {
             app.error_message = None;
             app.error_message_time = None;
         }
     }
 
     if let Some(error) = &app.error_message {
-        let color = if error.starts_with("✓") {
+        let color = if error.starts_with("✅") {
             egui::Color32::GREEN
         } else {
             egui::Color32::RED
@@ -55,7 +55,7 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
         ui.colored_label(color, error);
     }
 
-    // Calculate columns based on available width (account for scrollbar)
+    // Grid setup
     let available_width = ui.available_width() - 20.0;
     let item_width = MyApp::THUMBNAIL_SIZE.x + 25.0;
     let num_columns = (available_width / item_width).floor().max(1.0) as usize;
@@ -65,7 +65,7 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
         .show(ui, |ui| {
             ui.add_space(10.0);
 
-            egui::Frame::none()
+            egui::Frame::new()
                 .inner_margin(egui::Margin::symmetric(20, 10))
                 .show(ui, |ui| {
                     egui::Grid::new("file_grid")
@@ -75,32 +75,26 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                             for (idx, item) in app.current_items.iter().enumerate() {
                                 match item {
                                     FileSystemItem::Directory { name, path } => {
-                                        let button_response = ui
-                                            .vertical(|ui| {
-                                                ui.set_width(MyApp::THUMBNAIL_SIZE.x);
-                                                ui.set_height(MyApp::THUMBNAIL_SIZE.y);
+                                        let button = ui.vertical(|ui| {
+                                            ui.set_width(MyApp::THUMBNAIL_SIZE.x);
+                                            ui.set_height(MyApp::THUMBNAIL_SIZE.y);
+                                            let btn = ui.button(RichText::new("📁").size(MyApp::THUMBNAIL_SIZE.y * 0.8));
+                                            ui.centered_and_justified(|ui| {
+                                                ui.label(RichText::from(name));
+                                            });
+                                            btn
+                                        }).inner;
 
-                                                let button = ui.button(
-                                                    RichText::new("📁")
-                                                        .size(MyApp::THUMBNAIL_SIZE.y * 0.8),
-                                                );
-                                                ui.centered_and_justified(|ui| {
-                                                    ui.label(RichText::from(name));
-                                                });
-                                                button
-                                            })
-                                            .inner;
-
-                                        if button_response.double_clicked() {
+                                        if button.double_clicked() {
                                             navigate_to = Some(path.to_string_lossy().to_string());
                                         }
                                     }
                                     FileSystemItem::SvgFile { name, path } => {
                                         ui.vertical(|ui| {
                                             let img_uri = format!("file://{}", path.display());
-                                            let button = ui.add(egui::ImageButton::new(
+                                            let button = ui.add(egui::Button::new(
                                                 egui::Image::new(img_uri)
-                                                    .rounding(10.0)
+                                                    .corner_radius(10.0)
                                                     .fit_to_exact_size(MyApp::THUMBNAIL_SIZE),
                                             ));
 
@@ -108,33 +102,9 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                                 load_svg = Some(path.clone());
                                             }
 
-                                            button.context_menu(|ui| {
-                                                if ui.button("Edit").clicked() {
-                                                    load_svg = Some(path.clone());
-                                                    ui.close_menu();
-                                                }
-                                                if ui.button("Copy File").clicked() {
-                                                    match file_actions::copy_file_to_clipboard(path) {
-                                                        Ok(_) => pending_error = Some("✓ File copied to clipboard".to_string()),
-                                                        Err(e) => pending_error = Some(format!("Failed to copy file: {}", e)),
-                                                    }
-                                                    ui.close_menu();
-                                                }
-                                                if ui.button("Rename").clicked() {
-                                                    app.rename_file_path = Some(path.clone());
-                                                    app.rename_input = name.clone();
-                                                    app.rename_just_opened = true;
-                                                    ui.close_menu();
-                                                }
-                                                if ui.button("File Explorer").clicked() {
-                                                    file_actions::reveal_in_explorer(path);
-                                                    ui.close_menu();
-                                                }
-                                                if ui.button("Delete").clicked() {
-                                                    app.delete_file_path = Some(path.clone());
-                                                    ui.close_menu();
-                                                }
-                                            });
+                                            show_context_menu(button, ui, path, name, true,
+                                                              &mut pending_edit, &mut pending_rename,
+                                                              &mut pending_delete, &mut pending_error);
 
                                             ui.label(name);
                                         });
@@ -144,44 +114,19 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                             ui.set_width(MyApp::THUMBNAIL_SIZE.x);
                                             ui.set_height(MyApp::THUMBNAIL_SIZE.y);
 
-                                            // Font icon with extension
                                             let extension = path.extension()
                                                 .and_then(|e| e.to_str())
                                                 .unwrap_or("")
                                                 .to_uppercase();
 
                                             let button = ui.button(
-                                                egui::RichText::new(format!("🔤\n.{}", extension))
+                                                RichText::new(format!("🔤\n.{}", extension))
                                                     .size(MyApp::THUMBNAIL_SIZE.y * 0.3)
                                             );
 
-                                            if button.clicked() {
-                                                // Could preview font or show details
-                                            }
-
-                                            button.context_menu(|ui| {
-                                                if ui.button("Copy File").clicked() {
-                                                    match file_actions::copy_file_to_clipboard(path) {
-                                                        Ok(_) => pending_error = Some("✓ File copied to clipboard".to_string()),
-                                                        Err(e) => pending_error = Some(format!("Failed to copy file: {}", e)),
-                                                    }
-                                                    ui.close_menu();
-                                                }
-                                                if ui.button("Rename").clicked() {
-                                                    app.rename_file_path = Some(path.clone());
-                                                    app.rename_input = name.clone();
-                                                    app.rename_just_opened = true;
-                                                    ui.close_menu();
-                                                }
-                                                if ui.button("File Explorer").clicked() {
-                                                    file_actions::reveal_in_explorer(path);
-                                                    ui.close_menu();
-                                                }
-                                                if ui.button("Delete").clicked() {
-                                                    app.delete_file_path = Some(path.clone());
-                                                    ui.close_menu();
-                                                }
-                                            });
+                                            show_context_menu(button, ui, path, name, false,
+                                                              &mut pending_edit, &mut pending_rename,
+                                                              &mut pending_delete, &mut pending_error);
 
                                             ui.label(name);
                                         });
@@ -196,12 +141,69 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                 });
         });
 
-    // Set pending error message after all closures are done
+    // Apply pending actions
+    if let Some(path) = pending_edit {
+        load_svg = Some(path);
+        app.current_view = View::Editor;
+    }
+
+    if let Some((path, name)) = pending_rename {
+        app.rename_file_path = Some(path);
+        app.rename_input = name;
+        app.rename_just_opened = true;
+    }
+
+    if let Some(path) = pending_delete {
+        app.delete_file_path = Some(path);
+    }
+
     if let Some(error) = pending_error {
         app.set_error_message(error);
     }
 
     (navigate_to, load_svg)
+}
+
+fn show_context_menu(
+    response: egui::Response,
+    _ui: &mut egui::Ui,
+    path: &PathBuf,
+    name: &str,
+    is_svg: bool,
+    pending_edit: &mut Option<PathBuf>,
+    pending_rename: &mut Option<(PathBuf, String)>,
+    pending_delete: &mut Option<PathBuf>,
+    pending_error: &mut Option<String>,
+) {
+    response.context_menu(|ui| {
+        if is_svg && ui.button("Edit").clicked() {
+            *pending_edit = Some(path.clone());
+            ui.close();
+        }
+
+        if ui.button("Copy File").clicked() {
+            match file_actions::copy_file_to_clipboard(path) {
+                Ok(_) => *pending_error = Some("✅ File copied to clipboard".to_string()),
+                Err(e) => *pending_error = Some(format!("Failed to copy file: {}", e)),
+            }
+            ui.close();
+        }
+
+        if ui.button("Rename").clicked() {
+            *pending_rename = Some((path.clone(), name.to_string()));
+            ui.close();
+        }
+
+        if ui.button("File Explorer").clicked() {
+            file_actions::reveal_in_explorer(path);
+            ui.close();
+        }
+
+        if ui.button("Delete").clicked() {
+            *pending_delete = Some(path.clone());
+            ui.close();
+        }
+    });
 }
 
 fn get_parent_path(current: &str) -> String {

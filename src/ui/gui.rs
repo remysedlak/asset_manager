@@ -10,7 +10,6 @@ use std::path::{PathBuf};
 use std::time::Instant;
 use crate::utils::file_finder::{scan_directory, FileFilter};
 use crate::models::gui::View;
-use crate::ui;
 
 pub struct MyApp {
     pub(crate) vault_path: String,
@@ -60,7 +59,7 @@ impl MyApp {
                 self.current_items = items;
                 self.current_path = path.clone();
             }
-            Err(e) => self.error_message = Some(format!("Error scanning directory: {}", e)),
+            Err(e) => self.set_error_message(format!("Error scanning directory: {}", e)),
         }
     }
 
@@ -75,7 +74,7 @@ impl MyApp {
 
         match scan_directory(&self.current_path, filter) {
             Ok(items) => self.current_items = items,
-            Err(e) => self.error_message = Some(format!("Error scanning directory: {}", e)),
+            Err(e) => self.set_error_message(format!("Error scanning directory: {}", e)),
         }
     }
 
@@ -86,7 +85,7 @@ impl MyApp {
                 self.selected_svg = Some(path.clone());
             }
             Err(e) => {
-                self.error_message = Some(format!("Failed to read file: {}", e));
+                self.set_error_message(format!("Failed to read file: {}", e));
             }
         }
     }
@@ -95,10 +94,10 @@ impl MyApp {
         if let Some(path) = &self.selected_svg {
             match fs::write(path, &self.svg_code) {
                 Ok(_) => {
-                    self.error_message = Some("✓ Saved!".to_string());
+                    self.set_error_message("✅ Saved!".to_string());
                 }
                 Err(e) => {
-                    self.error_message = Some(format!("Failed to save: {}", e));
+                    self.set_error_message(format!("Failed to save: {}", e));
                 }
             }
         }
@@ -106,9 +105,9 @@ impl MyApp {
 
     pub(crate) fn copy_svg_to_clipboard(&mut self) {
         if let Err(e) = self.clipboard.set_text(self.svg_code.clone()) {
-            self.error_message = Some(format!("Failed to copy: {}", e));
+            self.set_error_message(format!("Failed to copy: {}", e));
         } else {
-            self.error_message = Some("✓ Copied to clipboard!".to_string());
+            self.set_error_message("✅ Copied to clipboard!".to_string());
         }
     }
 }

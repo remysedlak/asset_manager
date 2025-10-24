@@ -56,7 +56,7 @@ pub fn copy_file_to_clipboard(path: &Path) -> Result<(), Box<dyn std::error::Err
         let uri = format!("file://{}\n", path.canonicalize()?.display());
         use std::io::Write;
 
-        let mut child = std::process::Command::new("xclip")
+        let mut child = Command::new("xclip")
             .arg("-selection")
             .arg("clipboard")
             .arg("-t")
