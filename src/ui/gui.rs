@@ -30,6 +30,7 @@ pub struct MyApp {
     pub(crate) delete_file_path: Option<PathBuf>,
     clipboard: Clipboard,
     pub(crate) code: String,
+    pub(crate) reset_panel_width: bool,
 }
 
 impl MyApp {
@@ -122,6 +123,7 @@ impl Default for MyApp {
 
         Self {
             grid_reset_counter: 0,
+            reset_panel_width: false,
             vault_path: vault_path.clone(),
             current_path: vault_path.clone(),
             font_path: font_path.clone(),

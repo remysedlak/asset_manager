@@ -110,6 +110,7 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
 
                                             if button.clicked() {
                                                 load_svg = Some(path.clone());
+                                                app.reset_panel_width = true;
                                             }
 
                                             show_context_menu(button, ui, path, name, true,

@@ -4,8 +4,17 @@ use crate::utils::svg_parser;
 use egui::{Align, RichText, ScrollArea, SidePanel};
 
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {
+    // Reset panel width if flagged
+    let is_resetting = app.reset_panel_width;
+    if app.reset_panel_width {
+        ctx.memory_mut(|mem| {
+            mem.data.insert_persisted(egui::Id::new("side_panel"), 200.0f32);
+        });
+        app.reset_panel_width = false;
+    }
+
     SidePanel::right("side_panel")
-        .default_width(200.0)
+        .default_width(100.0)
         .min_width(0.0)  // Allow complete collapse
         .max_width(400.0)
         .resizable(true)
@@ -15,8 +24,8 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                 .fill(egui::Color32::from_rgb(30, 29, 25)),
         )
         .show(ctx, |ui| {
-            // Only show content if panel is wide enough
-            if ui.available_width() > 20.0 {
+            // Only show content if panel is wide enough OR if we're resetting
+            if ui.available_width() > 20.0 || is_resetting {
                 ScrollArea::vertical()
                     .id_salt("side_panel_scroll")
                     .show(ui, |ui| {
