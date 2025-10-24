@@ -16,13 +16,11 @@ A desktop application for browsing and editing SVG files.
    cargo run
 ```
 
-Linux users: install xclip for copy/paste functionality
+***Linux users***: install `xclip` for copy/paste functionality
 
 ## Usage
 
-1. Click ⚙️ to set your SVG folder path
-2. Click on any SVG to view and edit it
-3. Use 📋 Copy to copy the SVG code
-4. Use 💾 Save to save your changes
+1. Click ⚙️ to set your folder paths
+2. Navigate and edit files via gui gallery
 
 So much more to come.
