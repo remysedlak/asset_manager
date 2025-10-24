@@ -71,10 +71,12 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                                 ui.set_height(MyApp::THUMBNAIL_SIZE.y);
 
                                                 let button = ui.button(
-                                                    egui::RichText::new("📁")
-                                                        .size(MyApp::THUMBNAIL_SIZE.y * 0.6),
+                                                    RichText::new("📁")
+                                                        .size(MyApp::THUMBNAIL_SIZE.y * 0.8),
                                                 );
-                                                ui.label(name);
+                                                ui.centered_and_justified(|ui| {
+                                                    ui.label(RichText::from(name));
+                                                });
                                                 button
                                             })
                                             .inner;

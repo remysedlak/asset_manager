@@ -1,6 +1,5 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use arboard::Clipboard;
 
 pub fn reveal_in_explorer(path: &PathBuf) {
     #[cfg(target_os = "windows")]
@@ -64,7 +63,7 @@ pub fn copy_file_to_clipboard(path: &Path) -> Result<(), Box<dyn std::error::Err
             .arg("text/uri-list")
             .stdin(std::process::Stdio::piped())
             .spawn()
-            .map_err(|e| format!("xclip not found. Please install it with: sudo apt install xclip"))?;
+            .map_err(|e| format!("xclip not found. Please install it with: sudo apt install xclip: {e}"))?;
 
         if let Some(mut stdin) = child.stdin.take() {
             stdin.write_all(uri.as_bytes())?;

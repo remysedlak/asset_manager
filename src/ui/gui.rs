@@ -1,18 +1,19 @@
 use crate::models::file_items::FileSystemItem;
 use crate::ui::{code_editor, gallery, toolbar};
-use crate::utils::{config::AppConfig, file_finder};
+use crate::utils::{config::AppConfig};
 use arboard::Clipboard;
 use eframe::egui;
 use eframe::glow::Context;
 use egui::{CentralPanel, RichText, Vec2};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 use crate::utils::file_finder::{scan_directory, FileFilter};
 
 pub enum View {
     Gallery,
     Settings,
     Fonts,
+    Help,
 }
 
 pub struct MyApp {
@@ -200,6 +201,15 @@ impl eframe::App for MyApp {
                 if let Some(new_path) = navigate_to {
                     self.navigate_to(new_path);
                 }
+            }
+            View::Help => {
+                ui.heading(RichText::from("Help").size(20.0).strong());
+                ui.separator();
+                ui.add_space(10.0);
+                ui.vertical(|ui|{
+                    ui.label(RichText::from("Controls:").size(15.0));
+                });
+
             }
         });
     }

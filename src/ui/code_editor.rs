@@ -15,7 +15,7 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
         )
         .show(ctx, |ui| {
             ScrollArea::vertical()
-                .id_source("side_panel_scroll")
+                .id_salt("side_panel_scroll")
                 .show(ui, |ui| {
                     // Header with title and close button
                     ui.horizontal(|ui| {
@@ -43,22 +43,6 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                         });
                         ui.add_space(8.0);
                     }
-
-                    // Action buttons
-                    ui.horizontal(|ui| {
-                        if ui.button(RichText::new("Copy").size(14.0))
-                            .on_hover_text("Copy SVG code to clipboard")
-                            .clicked()
-                        {
-                            app.copy_svg_to_clipboard();
-                        }
-                        if ui.button(RichText::new("Save").size(14.0))
-                            .on_hover_text("Save changes to file")
-                            .clicked()
-                        {
-                            app.save_svg();
-                        }
-                    });
 
                     ui.add_space(12.0);
                     ui.separator();
@@ -167,7 +151,7 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                         .rounding(6.0)
                         .show(ui, |ui| {
                             ScrollArea::both()
-                                .id_source("preview_scroll")
+                                .id_salt("preview_scroll")
                                 .max_height(200.0)
                                 .show(ui, |ui| {
                                     if let Some(svg_path) = &app.selected_svg {
@@ -194,7 +178,7 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                         .rounding(6.0)
                         .show(ui, |ui| {
                             ScrollArea::vertical()
-                                .id_source("code_editor_scroll")
+                                .id_salt("code_editor_scroll")
                                 .max_height(400.0)
                                 .show(ui, |ui| {
                                     ui.add(
@@ -206,6 +190,24 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                                     );
                                 });
                         });
+
+                    // Action buttons
+                    ui.horizontal(|ui| {
+                        ui.with_layout(egui::Layout::right_to_left(Align::Center), |ui| {
+                            if ui.button(RichText::new("Save").size(14.0))
+                                .on_hover_text("Save changes to file")
+                                .clicked()
+                            {
+                                app.save_svg();
+                            }
+                            if ui.button(RichText::new("Copy").size(14.0))
+                                .on_hover_text("Copy SVG code to clipboard")
+                                .clicked()
+                            {
+                                app.copy_svg_to_clipboard();
+                            }
+                        });
+                    });
                 });
         });
 }
