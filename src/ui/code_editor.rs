@@ -44,10 +44,6 @@ pub fn render_editor(app: &mut MyApp, ui: &mut egui::Ui) {
                 app.save_svg();
             }
 
-            if ui.button("📋 Copy").clicked() {
-                app.copy_svg_to_clipboard();
-            }
-
             if ui.button("✖ Close").clicked() {
                 // Go back to Gallery view, keeping the SVG selected
                 // so the svg_overview panel stays open

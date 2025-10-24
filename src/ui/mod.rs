@@ -5,4 +5,4 @@ mod gallery;
 pub mod popups;
 pub mod help;
 mod settings;
-mod editor;
+mod code_editor;

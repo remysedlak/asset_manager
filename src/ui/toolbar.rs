@@ -9,7 +9,7 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
             .inner_margin(egui::Margin::same(5))
             .fill(ctx.style().visuals.panel_fill))
         .show(ctx, |ui| {
-            // Set button rounding
+            // Set button corner_radius
             ui.style_mut().visuals.widgets.inactive.corner_radius = egui::CornerRadius::same(10);
             ui.style_mut().visuals.widgets.hovered.corner_radius = egui::CornerRadius::same(10);
             ui.style_mut().visuals.widgets.active.corner_radius = egui::CornerRadius::same(10);

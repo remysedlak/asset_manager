@@ -85,6 +85,9 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                             app.svg_code.clear();
                         }
                     }
+
+                    // Force grid to reset
+                    app.grid_reset_counter = app.grid_reset_counter.wrapping_add(1);
                 }
                 Err(e) => {
                     app.set_error_message(format!("Failed to delete: {}", e));

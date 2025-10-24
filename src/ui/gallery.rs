@@ -55,7 +55,7 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
         ui.colored_label(color, error);
     }
 
-    // Grid setup
+    // Grid setup - recalculate every frame based on current available width
     let available_width = ui.available_width() - 20.0;
     let item_width = MyApp::THUMBNAIL_SIZE.x + 25.0;
     let num_columns = (available_width / item_width).floor().max(1.0) as usize;
@@ -68,35 +68,45 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
             egui::Frame::new()
                 .inner_margin(egui::Margin::symmetric(20, 10))
                 .show(ui, |ui| {
-                    egui::Grid::new("file_grid")
+                    // Generate unique grid ID based on number of columns
+                    // This forces the grid to reset when column count changes
+                    let grid_id = format!("file_grid_{}_{}", num_columns, app.grid_reset_counter);
+
+                    egui::Grid::new(grid_id)
                         .num_columns(num_columns)
                         .spacing([20.0, 20.0])
+                        .min_col_width(0.0)  // Don't enforce minimum column width
+                        .max_col_width(MyApp::THUMBNAIL_SIZE.x + 25.0)  // Set max column width
                         .show(ui, |ui| {
                             for (idx, item) in app.current_items.iter().enumerate() {
                                 match item {
                                     FileSystemItem::Directory { name, path } => {
-                                        let button = ui.vertical(|ui| {
+                                        ui.vertical(|ui| {
                                             ui.set_width(MyApp::THUMBNAIL_SIZE.x);
                                             ui.set_height(MyApp::THUMBNAIL_SIZE.y);
-                                            let btn = ui.button(RichText::new("📁").size(MyApp::THUMBNAIL_SIZE.y * 0.8));
-                                            ui.centered_and_justified(|ui| {
-                                                ui.label(RichText::from(name));
-                                            });
-                                            btn
-                                        }).inner;
 
-                                        if button.double_clicked() {
-                                            navigate_to = Some(path.to_string_lossy().to_string());
-                                        }
+                                            let button = ui.add(
+                                                egui::Button::new(
+                                                    RichText::new("📁").size(MyApp::THUMBNAIL_SIZE.y * 0.6)
+                                                )
+                                                    .corner_radius(10.0)
+                                                    .min_size(MyApp::THUMBNAIL_SIZE)
+                                            );
+
+                                            if button.double_clicked() {
+                                                navigate_to = Some(path.to_string_lossy().to_string());
+                                            }
+
+                                            ui.label(RichText::from(name).size(11.0));
+                                        });
                                     }
                                     FileSystemItem::SvgFile { name, path } => {
                                         ui.vertical(|ui| {
                                             let img_uri = format!("file://{}", path.display());
                                             let button = ui.add(egui::Button::new(
                                                 egui::Image::new(img_uri)
-                                                    .corner_radius(10.0)
                                                     .fit_to_exact_size(MyApp::THUMBNAIL_SIZE),
-                                            ));
+                                            ).corner_radius(10.0));
 
                                             if button.clicked() {
                                                 load_svg = Some(path.clone());
@@ -106,7 +116,7 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                                               &mut pending_edit, &mut pending_rename,
                                                               &mut pending_delete, &mut pending_error);
 
-                                            ui.label(name);
+                                            ui.label(RichText::from(name).size(11.0));
                                         });
                                     }
                                     FileSystemItem::FontFile { name, path } => {
@@ -119,16 +129,20 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                                 .unwrap_or("")
                                                 .to_uppercase();
 
-                                            let button = ui.button(
-                                                RichText::new(format!("🔤\n.{}", extension))
-                                                    .size(MyApp::THUMBNAIL_SIZE.y * 0.3)
+                                            let button = ui.add(
+                                                egui::Button::new(
+                                                    RichText::new(format!("🔤\n.{}", extension))
+                                                        .size(MyApp::THUMBNAIL_SIZE.y * 0.25)
+                                                )
+                                                    .corner_radius(10.0)
+                                                    .min_size(MyApp::THUMBNAIL_SIZE)
                                             );
 
                                             show_context_menu(button, ui, path, name, false,
                                                               &mut pending_edit, &mut pending_rename,
                                                               &mut pending_delete, &mut pending_error);
 
-                                            ui.label(name);
+                                            ui.label(RichText::from(name).size(11.0));
                                         });
                                     }
                                 }

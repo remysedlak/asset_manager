@@ -1,5 +1,5 @@
 use crate::models::file_items::FileSystemItem;
-use crate::ui::{editor, gallery, toolbar, settings};
+use crate::ui::{code_editor, gallery, toolbar, settings};
 use crate::utils::{config::AppConfig};
 use arboard::Clipboard;
 use eframe::egui;
@@ -12,6 +12,7 @@ use crate::utils::file_finder::{scan_directory, FileFilter};
 use crate::models::gui::View;
 
 pub struct MyApp {
+    pub(crate) grid_reset_counter: usize,
     pub(crate) vault_path: String,
     pub(crate) current_path: String,
     pub(crate) font_path: String,
@@ -120,6 +121,7 @@ impl Default for MyApp {
         let current_items = scan_directory(&vault_path, FileFilter::Svg).unwrap_or_default();
 
         Self {
+            grid_reset_counter: 0,
             vault_path: vault_path.clone(),
             current_path: vault_path.clone(),
             font_path: font_path.clone(),
@@ -198,7 +200,7 @@ impl eframe::App for MyApp {
                         self.load_svg(&path);
                     }
                 }
-                editor::render_editor(self, ui);
+                code_editor::render_editor(self, ui);
             }
         });
     }
