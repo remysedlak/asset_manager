@@ -11,3 +11,4 @@ scan_dir = "0.3.3"
 serde = { version = "1.0.228", features = ["derive"] }
 dirs = "6.0.0"
 serde_json = "1.0.145"
+arboard = "3.4"
