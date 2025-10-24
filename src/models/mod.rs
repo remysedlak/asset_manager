@@ -1,2 +1,2 @@
-pub mod graphic_file;
-pub use graphic_file::GraphicFile;
+pub mod file_items;
+pub use file_items::FileSystemItem;
