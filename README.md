@@ -16,6 +16,8 @@ A desktop application for browsing and editing SVG files.
    cargo run
 ```
 
+Linux users: install xclip for copy/paste functionality
+
 ## Usage
 
 1. Click ⚙️ to set your SVG folder path
