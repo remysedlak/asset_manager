@@ -24,3 +24,5 @@ A desktop application for browsing and editing SVG files.
 2. Navigate and edit files via gui gallery
 
 So much more to come.
+
+<img width="875" height="728" alt="image" src="https://github.com/user-attachments/assets/1d950a3e-37fd-4e5c-b30e-f347abb18cdf" />
