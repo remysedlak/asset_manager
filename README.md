@@ -11,8 +11,8 @@ A desktop application for browsing and editing SVG files.
 
 2. **Clone and Run**
 ```bash
-   git clone <your-repo-url>
-   cd <project-name>
+   git clone https://github.com/remysedlak/asset_manager
+   cd asset_manager
    cargo run
 ```
 
