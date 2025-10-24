@@ -1,5 +1,5 @@
 use crate::models::file_items::FileSystemItem;
-use crate::ui::{code_editor, gallery, toolbar};
+use crate::ui::{code_editor, gallery, toolbar, settings};
 use crate::utils::{config::AppConfig};
 use arboard::Clipboard;
 use eframe::egui;
@@ -8,13 +8,8 @@ use egui::{CentralPanel, RichText, Vec2};
 use std::fs;
 use std::path::{PathBuf};
 use crate::utils::file_finder::{scan_directory, FileFilter};
+use crate::models::gui::View;
 
-pub enum View {
-    Gallery,
-    Settings,
-    Fonts,
-    Help,
-}
 
 pub struct MyApp {
     pub(crate) vault_path: String,
@@ -36,7 +31,7 @@ pub struct MyApp {
 impl MyApp {
     pub(crate) const THUMBNAIL_SIZE: Vec2 = Vec2::new(80.0, 80.0);
 
-    fn save_config(&self) {
+    pub(crate) fn save_config(&self) {
         let config = AppConfig {
             vault_path: self.vault_path.clone(),
             font_path: self.font_path.clone()
@@ -152,37 +147,7 @@ impl eframe::App for MyApp {
 
         CentralPanel::default().show(ctx, |ui| match self.current_view {
             View::Settings => {
-                ui.heading(RichText::from("Settings").size(20.0).strong());
-                ui.separator();
-                ui.add_space(10.0);
-
-                ui.horizontal(|ui| {
-                    ui.label(RichText::from("SVG Path:").size(15.0));
-                    ui.text_edit_singleline(&mut self.vault_path_input);
-
-                    ui.add_space(10.0);
-
-                    if ui.button("Submit").clicked() {
-                        self.vault_path = self.vault_path_input.clone();
-                        self.save_config();
-                        self.current_view = View::Gallery;
-                        self.refresh_directory();
-                    }
-                });
-
-                ui.add_space(10.0);
-
-                ui.horizontal(|ui| {
-                    ui.label(RichText::from("Font Path:").size(15.0));
-                    ui.text_edit_singleline(&mut self.current_font_input);
-
-                    ui.add_space(10.0);
-
-                    if ui.button("Submit").clicked() {
-                        self.font_path = self.current_font_input.clone();
-                        self.save_config();
-                    }
-                });
+                settings::render(self, ui);
             }
             View::Gallery => {
                 let (navigate_to, load_svg) = gallery::render(self, ui);
@@ -209,7 +174,6 @@ impl eframe::App for MyApp {
                 ui.vertical(|ui|{
                     ui.label(RichText::from("Controls:").size(15.0));
                 });
-
             }
         });
     }

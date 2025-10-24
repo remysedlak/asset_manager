@@ -4,6 +4,7 @@ use crate::models::file_items::FileSystemItem;
 use crate::utils::file_actions;
 use egui::ScrollArea;
 use std::path::PathBuf;
+use crate::models::gui::View;
 
 pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<PathBuf>) {
     let mut navigate_to: Option<String> = None;
@@ -11,8 +12,8 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
 
     // Determine the root path based on current view
     let root_path = match app.current_view {
-        crate::ui::gui::View::Gallery => &app.vault_path,
-        crate::ui::gui::View::Fonts => &app.font_path,
+        View::Gallery => &app.vault_path,
+        View::Fonts => &app.font_path,
         _ => &app.current_path,
     };
 

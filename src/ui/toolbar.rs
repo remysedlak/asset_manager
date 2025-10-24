@@ -1,4 +1,5 @@
-use crate::ui::gui::{MyApp, View};
+use crate::ui::gui::{MyApp};
+use crate::models::gui::View;
 use egui::{SidePanel, RichText};
 
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {
