@@ -21,6 +21,9 @@ pub struct MyApp {
     pub(crate) selected_svg: Option<PathBuf>,
     pub(crate) svg_code: String,
     pub(crate) error_message: Option<String>,
+    pub(crate) rename_file_path: Option<PathBuf>,
+    pub(crate) rename_input: String,
+    pub(crate) rename_just_opened: bool,
     pub(crate) current_view: View,
     clipboard: Clipboard,
 }
@@ -101,6 +104,9 @@ impl Default for MyApp {
             svg_code: String::new(),
             error_message: None,
             current_view: View::Gallery,
+            rename_input: String::new(),       // Add this
+            rename_just_opened: false,
+            rename_file_path: None,
             clipboard: Clipboard::new().unwrap(),
         }
     }
@@ -109,6 +115,10 @@ impl Default for MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         toolbar::render(self, ctx);
+
+        if self.rename_file_path.is_some() {
+            crate::ui::popups::rename_file::render(self, ctx);
+        }
 
         // Code editor on the right when SVG is selected
         if let View::Gallery = self.current_view {

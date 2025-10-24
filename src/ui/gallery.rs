@@ -27,18 +27,17 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
     }
 
     // Calculate columns based on available width (account for scrollbar)
-    let available_width = ui.available_width() - 20.0; // Reserve space for scrollbar
-    let item_width = MyApp::THUMBNAIL_SIZE.x + 25.0; // thumbnail + spacing
+    let available_width = ui.available_width() - 20.0;
+    let item_width = MyApp::THUMBNAIL_SIZE.x + 25.0;
     let num_columns = (available_width / item_width).floor().max(1.0) as usize;
 
     ScrollArea::vertical()
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysVisible)
         .show(ui, |ui| {
-            // Add padding inside scroll area
             ui.add_space(10.0);
 
             egui::Frame::none()
-                .inner_margin(egui::Margin::symmetric(20.0, 10.0)) // left/right, top/bottom padding
+                .inner_margin(egui::Margin::symmetric(20.0, 10.0))
                 .show(ui, |ui| {
                     egui::Grid::new("file_grid")
                         .num_columns(num_columns)
@@ -79,11 +78,14 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                             }
 
                                             button.context_menu(|ui| {
-                                                if ui.button("📝 Edit").clicked() {
+                                                if ui.button("Edit").clicked() {
                                                     load_svg = Some(path.clone());
                                                     ui.close_menu();
                                                 }
                                                 if ui.button("Rename").clicked() {
+                                                    app.rename_file_path = Some(path.clone());
+                                                    app.rename_input = name.clone();  // Pre-fill with current name
+                                                    app.rename_just_opened = true;    // Flag to auto-focus
                                                     ui.close_menu();
                                                 }
                                             });
