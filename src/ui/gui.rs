@@ -1,13 +1,12 @@
 use crate::models::file_items::FileSystemItem;
 use crate::utils::{file_finder, config::AppConfig};
+use crate::ui::{code_editor, toolbar};
 use eframe::egui;
 use eframe::glow::Context;
-use egui::{CentralPanel, ScrollArea, SidePanel, Vec2};
+use egui::{CentralPanel, ScrollArea, Vec2};
 use std::path::{Path, PathBuf};
 use arboard::Clipboard;
-use ui::code_editor;
 use std::fs;
-use crate::ui;
 
 pub enum View {
     Gallery,
@@ -15,20 +14,19 @@ pub enum View {
 }
 
 pub struct MyApp {
-    vault_path: String,           // Saved home path
+    pub(crate) vault_path: String,           // Saved home path
     current_path: String,          // Current browsing path
-    vault_path_input: String,
+    pub(crate) vault_path_input: String,
     current_items: Vec<FileSystemItem>,
     pub(crate) selected_svg: Option<PathBuf>,
     pub(crate) svg_code: String,              // SVG code being edited
     error_message: Option<String>,
-    current_view: View,
+    pub(crate) current_view: View,
     clipboard: Clipboard,
 }
 
 impl MyApp {
     pub(crate) const THUMBNAIL_SIZE: Vec2 = Vec2::new(80.0, 80.0);
-    const PREVIEW_SIZE: f32 = 300.0;
 
     fn save_config(&self) {
         let config = AppConfig {
@@ -37,7 +35,7 @@ impl MyApp {
         config.save();
     }
 
-    fn refresh_directory(&mut self) {
+    pub(crate) fn refresh_directory(&mut self) {
         match file_finder::scan_directory(&self.current_path) {
             Ok(items) => {
                 self.current_items = items;
@@ -118,35 +116,7 @@ impl Default for MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // TOOL SECTION
-        SidePanel::left("my_left_panel")
-            .max_width(60.0)
-            .frame(egui::Frame::default().inner_margin(egui::Margin::same(8.0)))
-            .show(ctx, |ui| {
-                // SVG View
-                if ui
-                    .add_sized(
-                        [40.0, 40.0],
-                        egui::Button::new(egui::RichText::new("🎨").size(24.0)),
-                    )
-                    .on_hover_text("View SVGs")
-                    .clicked()
-                {
-                    self.current_view = View::Gallery;
-                    self.refresh_directory();
-                }
-                // Settings View
-                if ui
-                    .add_sized(
-                        [40.0, 40.0],
-                        egui::Button::new(egui::RichText::new("⚙").size(24.0)),
-                    )
-                    .on_hover_text("Settings")
-                    .clicked()
-                {
-                    self.current_view = View::Settings;
-                    self.vault_path_input = self.vault_path.clone();
-                }
-            });
+        toolbar::render(self, ctx);
 
         // In the update function, replace the RIGHT PANEL section with:
         if let View::Gallery = self.current_view {
@@ -178,11 +148,11 @@ impl eframe::App for MyApp {
                 View::Gallery => {
                     ui.horizontal(|ui| {
                         // Back button
-                        if ui.button("⬅ Back").clicked() {
+                        if ui.button("⬅").clicked() {
                             self.navigate_back();
                         }
 
-                        ui.label(format!("Current: {}", self.current_path));
+                        ui.label(format!("{}", self.current_path));
                     });
 
                     ui.separator();
