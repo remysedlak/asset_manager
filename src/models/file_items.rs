@@ -4,4 +4,5 @@ use std::path::PathBuf;
 pub enum FileSystemItem {
     Directory { name: String, path: PathBuf },
     SvgFile { name: String, path: PathBuf },
+    FontFile { name: String, path: PathBuf },
 }

@@ -1,22 +1,26 @@
 use crate::models::file_items::FileSystemItem;
-use crate::utils::{file_finder, config::AppConfig};
-use crate::ui::{code_editor, toolbar, gallery};
+use crate::ui::{code_editor, gallery, toolbar};
+use crate::utils::{config::AppConfig, file_finder};
+use arboard::Clipboard;
 use eframe::egui;
 use eframe::glow::Context;
 use egui::{CentralPanel, RichText, Vec2};
-use std::path::{Path, PathBuf};
-use arboard::Clipboard;
 use std::fs;
+use std::path::{Path, PathBuf};
+use crate::utils::file_finder::{scan_directory, FileFilter};
 
 pub enum View {
     Gallery,
     Settings,
+    Fonts,
 }
 
 pub struct MyApp {
     pub(crate) vault_path: String,
     pub(crate) current_path: String,
+    pub(crate) font_path: String,
     pub(crate) vault_path_input: String,
+    pub(crate) current_font_input: String,
     pub(crate) current_items: Vec<FileSystemItem>,
     pub(crate) selected_svg: Option<PathBuf>,
     pub(crate) svg_code: String,
@@ -34,25 +38,40 @@ impl MyApp {
     fn save_config(&self) {
         let config = AppConfig {
             vault_path: self.vault_path.clone(),
+            font_path: self.font_path.clone()
         };
         config.save();
     }
 
-    pub(crate) fn refresh_directory(&mut self) {
-        match file_finder::scan_directory(&self.current_path) {
+    pub fn refresh_directory(&mut self) {
+        let (path, filter) = match self.current_view {
+            View::Gallery => (&self.vault_path, FileFilter::Svg),
+            View::Fonts => (&self.font_path, FileFilter::Font),
+            _ => return,
+        };
+
+        match scan_directory(path, filter) {
             Ok(items) => {
                 self.current_items = items;
-                self.error_message = None;
+                self.current_path = path.clone();
             }
-            Err(e) => {
-                self.error_message = Some(format!("Error: {}", e));
-            }
+            Err(e) => self.error_message = Some(format!("Error scanning directory: {}", e)),
         }
     }
 
     fn navigate_to(&mut self, path: String) {
         self.current_path = path;
-        self.refresh_directory();
+
+        let filter = match self.current_view {
+            View::Gallery => FileFilter::Svg,
+            View::Fonts => FileFilter::Font,
+            _ => return,
+        };
+
+        match scan_directory(&self.current_path, filter) {
+            Ok(items) => self.current_items = items,
+            Err(e) => self.error_message = Some(format!("Error scanning directory: {}", e)),
+        }
     }
 
     fn load_svg(&mut self, path: &PathBuf) {
@@ -93,18 +112,21 @@ impl Default for MyApp {
     fn default() -> Self {
         let config = AppConfig::load();
         let vault_path = config.vault_path.clone();
-        let current_items = file_finder::scan_directory(&vault_path).unwrap_or_default();
+        let font_path = config.font_path.clone();
+        let current_items = scan_directory(&vault_path, FileFilter::Svg).unwrap_or_default();
 
         Self {
             vault_path: vault_path.clone(),
             current_path: vault_path.clone(),
+            font_path: font_path.clone(),
             vault_path_input: vault_path,
             current_items,
+            current_font_input: font_path,
             selected_svg: None,
             svg_code: String::new(),
             error_message: None,
             current_view: View::Gallery,
-            rename_input: String::new(),       // Add this
+            rename_input: String::new(),
             rename_just_opened: false,
             rename_file_path: None,
             clipboard: Clipboard::new().unwrap(),
@@ -127,38 +149,56 @@ impl eframe::App for MyApp {
             }
         }
 
-        CentralPanel::default().show(ctx, |ui| {
-            match self.current_view {
-                View::Settings => {
-                    ui.heading(RichText::from("Settings").size(20.0).strong());
-                    ui.separator();
+        CentralPanel::default().show(ctx, |ui| match self.current_view {
+            View::Settings => {
+                ui.heading(RichText::from("Settings").size(20.0).strong());
+                ui.separator();
+                ui.add_space(10.0);
+
+                ui.horizontal(|ui| {
+                    ui.label(RichText::from("SVG Path:").size(15.0));
+                    ui.text_edit_singleline(&mut self.vault_path_input);
+
                     ui.add_space(10.0);
 
-                    ui.horizontal(|ui| {
-                        ui.label(RichText::from("Vault Path:").size(15.0));
-                        ui.text_edit_singleline(&mut self.vault_path_input);
+                    if ui.button("Submit").clicked() {
+                        self.vault_path = self.vault_path_input.clone();
+                        self.save_config();
+                        self.current_view = View::Gallery;
+                        self.refresh_directory();
+                    }
+                });
 
-                        ui.add_space(10.0);
+                ui.add_space(10.0);
 
-                        if ui.button("Submit").clicked() {
-                            self.vault_path = self.vault_path_input.clone();
-                            self.current_path = self.vault_path.clone();
-                            self.save_config();
-                            self.refresh_directory();
-                            self.current_view = View::Gallery;
-                        }
-                    });
+                ui.horizontal(|ui| {
+                    ui.label(RichText::from("Font Path:").size(15.0));
+                    ui.text_edit_singleline(&mut self.current_font_input);
+
+                    ui.add_space(10.0);
+
+                    if ui.button("Submit").clicked() {
+                        self.font_path = self.current_font_input.clone();
+                        self.save_config();
+                    }
+                });
+            }
+            View::Gallery => {
+                let (navigate_to, load_svg) = gallery::render(self, ui);
+
+                if let Some(new_path) = navigate_to {
+                    self.navigate_to(new_path);
                 }
-                View::Gallery => {
-                    let (navigate_to, load_svg) = gallery::render(self, ui);
 
-                    if let Some(new_path) = navigate_to {
-                        self.navigate_to(new_path);
-                    }
+                if let Some(path) = load_svg {
+                    self.load_svg(&path);
+                }
+            }
+            View::Fonts => {
+                let (navigate_to, _load_font) = gallery::render(self, ui);
 
-                    if let Some(path) = load_svg {
-                        self.load_svg(&path);
-                    }
+                if let Some(new_path) = navigate_to {
+                    self.navigate_to(new_path);
                 }
             }
         });

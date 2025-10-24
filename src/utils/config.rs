@@ -5,12 +5,14 @@ use std::path::PathBuf;
 #[derive(Serialize, Deserialize)]
 pub struct AppConfig {
     pub vault_path: String,
+    pub font_path: String,
 }
 
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
             vault_path: "/home/remy/Pictures/images/svg".to_owned(),
+            font_path: "/home/remy/Documents/fonts".to_owned()
         }
     }
 }

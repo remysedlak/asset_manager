@@ -26,6 +26,21 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
 
                 ui.add_space(10.0);
 
+                // Font View
+                if ui
+                    .add_sized(
+                        [40.0, 40.0],
+                        egui::Button::new(RichText::new("α").size(28.0)),
+                    )
+                    .on_hover_text("Fonts")
+                    .clicked()
+                {
+                    app.current_view = View::Fonts;
+                    app.refresh_directory();
+                }
+
+                ui.add_space(10.0);
+
                 // Settings View
                 if ui
                     .add_sized(
