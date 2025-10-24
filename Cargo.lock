@@ -222,6 +222,7 @@ dependencies = [
  "scan_dir",
  "serde",
  "serde_json",
+ "svgtypes",
 ]
 
 [[package]]

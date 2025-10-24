@@ -1,4 +1,5 @@
 use crate::ui::gui::MyApp;
+use crate::utils::svg_parser;
 use egui::{ScrollArea, SidePanel, RichText, Align};
 
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {
@@ -13,107 +14,197 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                 .fill(egui::Color32::from_rgb(30, 29, 25))
         )
         .show(ctx, |ui| {
-            // Header with title and close button
-            ui.horizontal(|ui| {
-                ui.heading(RichText::new("Editor").size(18.0));
-                ui.with_layout(egui::Layout::right_to_left(Align::Center), |ui| {
-                    if ui.button(RichText::new("―").size(14.0)).clicked() {
-                        app.selected_svg = None;
-                        app.svg_code.clear();
-                    }
-                });
-            });
-
-            ui.add_space(8.0);
-            ui.separator();
-            ui.add_space(8.0);
-
-            // File info
-            if let Some(svg_path) = &app.selected_svg {
-                ui.horizontal(|ui| {
-                    ui.label(RichText::new("📄").size(14.0));
-                    ui.label(
-                        RichText::new(svg_path.file_name().unwrap().to_string_lossy())
-                            .color(egui::Color32::from_rgb(180, 180, 180))
-                    );
-                });
-                ui.add_space(8.0);
-            }
-
-            // Action buttons
-            ui.horizontal(|ui| {
-                if ui.button(RichText::new("Copy").size(14.0))
-                    .on_hover_text("Copy SVG code to clipboard")
-                    .clicked()
-                {
-                    app.copy_svg_to_clipboard();
-                }
-                if ui.button(RichText::new("Save").size(14.0))
-                    .on_hover_text("Save changes to file")
-                    .clicked()
-                {
-                    app.save_svg();
-                }
-            });
-
-            ui.add_space(12.0);
-            ui.separator();
-            ui.add_space(8.0);
-
-            // Preview section
-            ui.label(RichText::new("Preview:").strong().size(14.0));
-            ui.add_space(4.0);
-
-            egui::Frame::none()
-                .fill(egui::Color32::from_rgb(35, 39, 42))
-                .inner_margin(egui::Margin::same(16.0))
-                .rounding(6.0)
+            ScrollArea::vertical()
+                .id_source("side_panel_scroll")
                 .show(ui, |ui| {
-                    ScrollArea::both()
-                        .id_source("preview_scroll")  // Add unique ID
-                        .show(ui, |ui| {
-                            if let Some(svg_path) = &app.selected_svg {
-                                let img_uri = format!("file://{}", svg_path.display());
-
-
-                                    ui.add(
-                                        egui::Image::new(img_uri)
-                                            .fit_to_exact_size(egui::Vec2::new(32.0, 32.0)),
-                                    );
-
+                    // Header with title and close button
+                    ui.horizontal(|ui| {
+                        ui.heading(RichText::new("Editor").size(18.0));
+                        ui.with_layout(egui::Layout::right_to_left(Align::Center), |ui| {
+                            if ui.button(RichText::new("―").size(14.0)).clicked() {
+                                app.selected_svg = None;
+                                app.svg_code.clear();
                             }
                         });
-                });
+                    });
 
-            ui.add_space(12.0);
-            ui.separator();
-            ui.add_space(8.0);
+                    ui.add_space(8.0);
+                    ui.separator();
+                    ui.add_space(8.0);
 
-
-
-
-            // Code editor section
-            ui.label(RichText::new("Code:").strong().size(14.0));
-            ui.add_space(4.0);
-
-            let code_height = ui.available_height() * 0.3;
-
-            egui::Frame::none()
-                .fill(egui::Color32::from_rgb(32, 34, 37))
-                .inner_margin(egui::Margin::same(8.0))
-                .rounding(6.0)
-                .show(ui, |ui| {
-                    ScrollArea::vertical()
-                        .id_source("code_editor_scroll")  // Add unique ID
-                        .max_height(code_height)
-                        .show(ui, |ui| {
-                            ui.add(
-                                egui::TextEdit::multiline(&mut app.svg_code)
-                                    .font(egui::TextStyle::Monospace)
-                                    .code_editor()
-                                    .desired_width(f32::INFINITY)
-                                    .desired_rows(15)
+                    // File info
+                    if let Some(svg_path) = &app.selected_svg {
+                        ui.horizontal(|ui| {
+                            ui.label(RichText::new("📄").size(14.0));
+                            ui.label(
+                                RichText::new(svg_path.file_name().unwrap().to_string_lossy())
+                                    .color(egui::Color32::from_rgb(180, 180, 180))
                             );
+                        });
+                        ui.add_space(8.0);
+                    }
+
+                    // Action buttons
+                    ui.horizontal(|ui| {
+                        if ui.button(RichText::new("Copy").size(14.0))
+                            .on_hover_text("Copy SVG code to clipboard")
+                            .clicked()
+                        {
+                            app.copy_svg_to_clipboard();
+                        }
+                        if ui.button(RichText::new("Save").size(14.0))
+                            .on_hover_text("Save changes to file")
+                            .clicked()
+                        {
+                            app.save_svg();
+                        }
+                    });
+
+                    ui.add_space(12.0);
+                    ui.separator();
+                    ui.add_space(8.0);
+
+                    // SVG Info Section
+                    if let Some(svg_path) = &app.selected_svg {
+                        if let Ok(svg_info) = svg_parser::parse_svg_info(svg_path) {
+                            ui.label(RichText::new("SVG Info:").strong().size(14.0));
+                            ui.add_space(4.0);
+
+                            egui::Frame::none()
+                                .fill(egui::Color32::from_rgb(35, 39, 42))
+                                .inner_margin(egui::Margin::same(12.0))
+                                .rounding(6.0)
+                                .show(ui, |ui| {
+                                    ui.spacing_mut().item_spacing.y = 6.0;
+
+                                    // Dimensions
+                                    if let (Some(width), Some(height)) = (&svg_info.width, &svg_info.height) {
+                                        ui.horizontal(|ui| {
+                                            ui.label(RichText::new("Size:").color(egui::Color32::from_rgb(150, 150, 150)));
+                                            ui.label(RichText::new(format!("{} × {}", width, height))
+                                                .color(egui::Color32::from_rgb(200, 200, 200)));
+                                        });
+                                    }
+
+                                    // ViewBox
+                                    if let Some(view_box) = &svg_info.view_box {
+                                        ui.horizontal(|ui| {
+                                            ui.label(RichText::new("ViewBox:").color(egui::Color32::from_rgb(150, 150, 150)));
+                                            ui.label(RichText::new(format!("{} {} {} {}",
+                                                                           view_box.x, view_box.y, view_box.w, view_box.h))
+                                                .color(egui::Color32::from_rgb(200, 200, 200)));
+                                        });
+                                    }
+
+                                    // Path count
+                                    ui.horizontal(|ui| {
+                                        ui.label(RichText::new("Paths:").color(egui::Color32::from_rgb(150, 150, 150)));
+                                        ui.label(RichText::new(format!("{}", svg_info.path_count))
+                                            .color(egui::Color32::from_rgb(200, 200, 200)));
+                                    });
+
+                                    // Path commands
+                                    if svg_info.total_path_commands > 0 {
+                                        ui.horizontal(|ui| {
+                                            ui.label(RichText::new("Commands:").color(egui::Color32::from_rgb(150, 150, 150)));
+                                            ui.label(RichText::new(format!("{}", svg_info.total_path_commands))
+                                                .color(egui::Color32::from_rgb(200, 200, 200)));
+                                        });
+                                    }
+
+                                    // Colors
+                                    if !svg_info.colors_used.is_empty() {
+                                        ui.add_space(4.0);
+                                        ui.label(RichText::new("🎨 Colors:").color(egui::Color32::from_rgb(150, 150, 150)));
+                                        ui.add_space(2.0);
+
+                                        egui::Grid::new("color_grid")
+                                            .spacing([4.0, 4.0])
+                                            .show(ui, |ui| {
+                                                for (idx, color) in svg_info.colors_used.iter().take(12).enumerate() {
+                                                    let color32 = egui::Color32::from_rgb(color.red, color.green, color.blue);
+
+                                                    let color_box = egui::Frame::none()
+                                                        .fill(color32)
+                                                        .rounding(4.0)
+                                                        .stroke(egui::Stroke::new(1.0, egui::Color32::from_rgb(100, 100, 100)))
+                                                        .show(ui, |ui| {
+                                                            ui.set_min_size(egui::Vec2::new(24.0, 24.0));
+                                                        });
+
+                                                    color_box.response.on_hover_text(format!(
+                                                        "rgb({}, {}, {})",
+                                                        color.red, color.green, color.blue
+                                                    ));
+
+                                                    if (idx + 1) % 4 == 0 {
+                                                        ui.end_row();
+                                                    }
+                                                }
+                                            });
+
+                                        if svg_info.colors_used.len() > 12 {
+                                            ui.label(RichText::new(format!("+ {} more", svg_info.colors_used.len() - 12))
+                                                .size(11.0)
+                                                .color(egui::Color32::from_rgb(120, 120, 120)));
+                                        }
+                                    }
+                                });
+
+                            ui.add_space(12.0);
+                            ui.separator();
+                            ui.add_space(8.0);
+                        }
+                    }
+
+                    // Preview section
+                    ui.label(RichText::new("Preview:").strong().size(14.0));
+                    ui.add_space(4.0);
+
+                    egui::Frame::none()
+                        .fill(egui::Color32::from_rgb(35, 39, 42))
+                        .inner_margin(egui::Margin::same(16.0))
+                        .rounding(6.0)
+                        .show(ui, |ui| {
+                            ScrollArea::both()
+                                .id_source("preview_scroll")
+                                .max_height(200.0)
+                                .show(ui, |ui| {
+                                    if let Some(svg_path) = &app.selected_svg {
+                                        let img_uri = format!("file://{}", svg_path.display());
+                                        ui.add(
+                                            egui::Image::new(img_uri)
+                                                .fit_to_exact_size(egui::Vec2::new(200.0, 200.0)),
+                                        );
+                                    }
+                                });
+                        });
+
+                    ui.add_space(12.0);
+                    ui.separator();
+                    ui.add_space(8.0);
+
+                    // Code editor section
+                    ui.label(RichText::new("Code:").strong().size(14.0));
+                    ui.add_space(4.0);
+
+                    egui::Frame::none()
+                        .fill(egui::Color32::from_rgb(32, 34, 37))
+                        .inner_margin(egui::Margin::same(8.0))
+                        .rounding(6.0)
+                        .show(ui, |ui| {
+                            ScrollArea::vertical()
+                                .id_source("code_editor_scroll")
+                                .max_height(400.0)
+                                .show(ui, |ui| {
+                                    ui.add(
+                                        egui::TextEdit::multiline(&mut app.svg_code)
+                                            .font(egui::TextStyle::Monospace)
+                                            .code_editor()
+                                            .desired_width(f32::INFINITY)
+                                            .desired_rows(15)
+                                    );
+                                });
                         });
                 });
         });
