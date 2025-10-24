@@ -1,3 +1,4 @@
+use crate::egui::RichText;
 use crate::ui::gui::MyApp;
 use crate::models::file_items::FileSystemItem;
 use crate::utils::file_actions;
@@ -10,10 +11,10 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
 
     // Center the grid content
     ui.horizontal(|ui| {
-        if ui.button("⬅").clicked() {
+        if ui.button(RichText::new("⬅").size(20.0)).clicked() {
             navigate_to = Some(get_parent_path(&app.current_path));
         }
-        ui.label(&app.current_path);
+        ui.label(RichText::from(&app.current_path).size(20.0));
     });
 
     ui.separator();
@@ -83,6 +84,13 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                                     load_svg = Some(path.clone());
                                                     ui.close_menu();
                                                 }
+                                                if ui.button("Copy File").clicked() {
+                                                    match file_actions::copy_file_to_clipboard(path) {
+                                                        Ok(_) => app.error_message = Some("✓ File copied to clipboard".to_string()),
+                                                        Err(e) => app.error_message = Some(format!("Failed to copy file: {}", e)),
+                                                    }
+                                                    ui.close_menu();
+                                                }
                                                 if ui.button("Rename").clicked() {
                                                     app.rename_file_path = Some(path.clone());
                                                     app.rename_input = name.clone();
@@ -91,6 +99,9 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                                 }
                                                 if ui.button("File Explorer").clicked() {
                                                     file_actions::reveal_in_explorer(path);
+                                                    ui.close_menu();
+                                                }
+                                                if ui.button("Delete").clicked() {
                                                     ui.close_menu();
                                                 }
                                             });

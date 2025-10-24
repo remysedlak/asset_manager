@@ -3,12 +3,14 @@ use egui::{ScrollArea, SidePanel, RichText, Align};
 
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {
     SidePanel::right("side_panel")
-        .min_width(300.0)
+        .default_width(300.0)
+        .min_width(20.0)
+        .max_width(400.0)
         .resizable(true)
         .frame(
             egui::Frame::default()
                 .inner_margin(egui::Margin::same(16.0))
-                .fill(egui::Color32::from_rgb(47, 49, 54))
+                .fill(egui::Color32::from_rgb(30, 29, 25))
         )
         .show(ctx, |ui| {
             // Header with title and close button
@@ -58,6 +60,38 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
             ui.separator();
             ui.add_space(8.0);
 
+            // Preview section
+            ui.label(RichText::new("Preview:").strong().size(14.0));
+            ui.add_space(4.0);
+
+            egui::Frame::none()
+                .fill(egui::Color32::from_rgb(35, 39, 42))
+                .inner_margin(egui::Margin::same(16.0))
+                .rounding(6.0)
+                .show(ui, |ui| {
+                    ScrollArea::both()
+                        .id_source("preview_scroll")  // Add unique ID
+                        .show(ui, |ui| {
+                            if let Some(svg_path) = &app.selected_svg {
+                                let img_uri = format!("file://{}", svg_path.display());
+
+
+                                    ui.add(
+                                        egui::Image::new(img_uri)
+                                            .fit_to_exact_size(egui::Vec2::new(32.0, 32.0)),
+                                    );
+
+                            }
+                        });
+                });
+
+            ui.add_space(12.0);
+            ui.separator();
+            ui.add_space(8.0);
+
+
+
+
             // Code editor section
             ui.label(RichText::new("Code:").strong().size(14.0));
             ui.add_space(4.0);
@@ -80,38 +114,6 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                                     .desired_width(f32::INFINITY)
                                     .desired_rows(15)
                             );
-                        });
-                });
-
-            ui.add_space(12.0);
-            ui.separator();
-            ui.add_space(8.0);
-
-            // Preview section
-            ui.label(RichText::new("Preview:").strong().size(14.0));
-            ui.add_space(4.0);
-
-            egui::Frame::none()
-                .fill(egui::Color32::from_rgb(35, 39, 42))
-                .inner_margin(egui::Margin::same(16.0))
-                .rounding(6.0)
-                .show(ui, |ui| {
-                    ScrollArea::both()
-                        .id_source("preview_scroll")  // Add unique ID
-                        .show(ui, |ui| {
-                            if let Some(svg_path) = &app.selected_svg {
-                                let img_uri = format!("file://{}", svg_path.display());
-                                let available_size = ui.available_size();
-
-                                ui.centered_and_justified(|ui| {
-                                    ui.add(
-                                        egui::Image::new(img_uri)
-                                            .max_width(available_size.x - 32.0)
-                                            .max_height(available_size.y - 32.0)
-                                            .shrink_to_fit()
-                                    );
-                                });
-                            }
                         });
                 });
         });

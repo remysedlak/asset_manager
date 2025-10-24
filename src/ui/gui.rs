@@ -3,7 +3,7 @@ use crate::utils::{file_finder, config::AppConfig};
 use crate::ui::{code_editor, toolbar, gallery};
 use eframe::egui;
 use eframe::glow::Context;
-use egui::{CentralPanel, Vec2};
+use egui::{CentralPanel, RichText, Vec2};
 use std::path::{Path, PathBuf};
 use arboard::Clipboard;
 use std::fs;
@@ -130,22 +130,24 @@ impl eframe::App for MyApp {
         CentralPanel::default().show(ctx, |ui| {
             match self.current_view {
                 View::Settings => {
-                    ui.heading("Settings");
+                    ui.heading(RichText::from("Settings").size(20.0).strong());
                     ui.separator();
                     ui.add_space(10.0);
 
-                    ui.label("Vault Path:");
-                    ui.text_edit_singleline(&mut self.vault_path_input);
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::from("Vault Path:").size(15.0));
+                        ui.text_edit_singleline(&mut self.vault_path_input);
 
-                    ui.add_space(10.0);
+                        ui.add_space(10.0);
 
-                    if ui.button("Submit").clicked() {
-                        self.vault_path = self.vault_path_input.clone();
-                        self.current_path = self.vault_path.clone();
-                        self.save_config();
-                        self.refresh_directory();
-                        self.current_view = View::Gallery;
-                    }
+                        if ui.button("Submit").clicked() {
+                            self.vault_path = self.vault_path_input.clone();
+                            self.current_path = self.vault_path.clone();
+                            self.save_config();
+                            self.refresh_directory();
+                            self.current_view = View::Gallery;
+                        }
+                    });
                 }
                 View::Gallery => {
                     let (navigate_to, load_svg) = gallery::render(self, ui);
