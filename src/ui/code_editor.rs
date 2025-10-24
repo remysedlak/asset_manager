@@ -3,7 +3,7 @@ use egui::{ScrollArea, SidePanel, RichText, Align};
 
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {
     SidePanel::right("side_panel")
-        .min_width(400.0)
+        .min_width(300.0)
         .resizable(true)
         .frame(
             egui::Frame::default()
@@ -40,13 +40,13 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
 
             // Action buttons
             ui.horizontal(|ui| {
-                if ui.button(RichText::new("📋 Copy").size(14.0))
+                if ui.button(RichText::new("Copy").size(14.0))
                     .on_hover_text("Copy SVG code to clipboard")
                     .clicked()
                 {
                     app.copy_svg_to_clipboard();
                 }
-                if ui.button(RichText::new("💾 Save").size(14.0))
+                if ui.button(RichText::new("Save").size(14.0))
                     .on_hover_text("Save changes to file")
                     .clicked()
                 {
@@ -62,7 +62,7 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
             ui.label(RichText::new("Code:").strong().size(14.0));
             ui.add_space(4.0);
 
-            let code_height = ui.available_height() * 0.5;
+            let code_height = ui.available_height() * 0.3;
 
             egui::Frame::none()
                 .fill(egui::Color32::from_rgb(32, 34, 37))
@@ -70,6 +70,7 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                 .rounding(6.0)
                 .show(ui, |ui| {
                     ScrollArea::vertical()
+                        .id_source("code_editor_scroll")  // Add unique ID
                         .max_height(code_height)
                         .show(ui, |ui| {
                             ui.add(
@@ -95,16 +96,23 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                 .inner_margin(egui::Margin::same(16.0))
                 .rounding(6.0)
                 .show(ui, |ui| {
-                    ui.centered_and_justified(|ui| {
-                        if let Some(svg_path) = &app.selected_svg {
-                            let img_uri = format!("file://{}", svg_path.display());
-                            ui.add(
-                                egui::Image::new(img_uri)
-                                    .fit_to_exact_size(MyApp::THUMBNAIL_SIZE * 3.0)
-                                    .rounding(8.0)
-                            );
-                        }
-                    });
+                    ScrollArea::both()
+                        .id_source("preview_scroll")  // Add unique ID
+                        .show(ui, |ui| {
+                            if let Some(svg_path) = &app.selected_svg {
+                                let img_uri = format!("file://{}", svg_path.display());
+                                let available_size = ui.available_size();
+
+                                ui.centered_and_justified(|ui| {
+                                    ui.add(
+                                        egui::Image::new(img_uri)
+                                            .max_width(available_size.x - 32.0)
+                                            .max_height(available_size.y - 32.0)
+                                            .shrink_to_fit()
+                                    );
+                                });
+                            }
+                        });
                 });
         });
 }

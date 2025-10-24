@@ -24,11 +24,11 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                 ui.add_space(10.0);
 
                 ui.horizontal(|ui| {
-                    if ui.button("✓ Rename").clicked() || (response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter))) {
+                    if ui.button("Rename").clicked() || (response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter))) {
                         should_rename = true;
                     }
 
-                    if ui.button("✖ Cancel").clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                    if ui.button("Cancel").clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {
                         should_close = true;
                     }
                 });

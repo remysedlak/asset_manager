@@ -1,5 +1,6 @@
 use crate::ui::gui::MyApp;
 use crate::models::file_items::FileSystemItem;
+use crate::utils::file_actions;
 use egui::ScrollArea;
 use std::path::PathBuf;
 
@@ -41,7 +42,7 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                 .show(ui, |ui| {
                     egui::Grid::new("file_grid")
                         .num_columns(num_columns)
-                        .spacing([25.0, 25.0])
+                        .spacing([20.0, 20.0])
                         .show(ui, |ui| {
                             for (idx, item) in app.current_items.iter().enumerate() {
                                 match item {
@@ -84,8 +85,12 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                                                 }
                                                 if ui.button("Rename").clicked() {
                                                     app.rename_file_path = Some(path.clone());
-                                                    app.rename_input = name.clone();  // Pre-fill with current name
-                                                    app.rename_just_opened = true;    // Flag to auto-focus
+                                                    app.rename_input = name.clone();
+                                                    app.rename_just_opened = true;
+                                                    ui.close_menu();
+                                                }
+                                                if ui.button("File Explorer").clicked() {
+                                                    file_actions::reveal_in_explorer(path);
                                                     ui.close_menu();
                                                 }
                                             });
