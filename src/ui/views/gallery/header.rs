@@ -36,30 +36,49 @@ pub fn render(
                     }
                 }
 
-                // Path display
-                ui.label(RichText::from(display_path).size(20.0));
+                // Path display or search bar
+                if app.search_active {
+                    ui.add(
+                        egui::TextEdit::singleline(&mut app.search_query)
+                            .hint_text("Search files...")
+                            .desired_width(300.0)
+                    );
+
+                    if ui.button("x").clicked() {
+                        app.search_active = false;
+                        app.search_query.clear();
+                    }
+                } else {
+                    ui.label(RichText::from(display_path).size(20.0));
+                }
 
                 // Control buttons on the right
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.button(RichText::new("🔍").size(16.0))
-                        .on_hover_text("Search")
-                        .clicked()
-                    {
-                        // TODO: Open search dialog
-                    }
-
-                    if ui.button(RichText::new("↕").size(16.0))
-                        .on_hover_text("Sort")
-                        .clicked()
-                    {
-                        // TODO: Open sort menu
-                    }
 
                     if ui.button(RichText::new("⚙").size(16.0))
                         .on_hover_text("View Options")
                         .clicked()
                     {
-                        // TODO: Open view options
+                        app.gallery_options = !app.gallery_options;
+                    }
+
+                    let sort_icon = if app.sort_ascending { "⬆" } else { "⬇" };
+                    if ui.button(RichText::new(sort_icon).size(16.0))
+                        .on_hover_text(if app.sort_ascending { "Sorted A-Z" } else { "Sorted Z-A" })
+                        .clicked()
+                    {
+                        app.sort_ascending = !app.sort_ascending;
+                        helpers::sort_items(&mut app.current_items, app.sort_ascending);
+                    }
+
+                    if ui.button(RichText::new("🔍").size(16.0))
+                        .on_hover_text("Search")
+                        .clicked()
+                    {
+                        app.search_active = !app.search_active;
+                        if !app.search_active {
+                            app.search_query.clear();
+                        }
                     }
                 });
             });

@@ -15,7 +15,9 @@ pub(crate) use crate::models::gui::MyApp;
 use crate::ui::views::gallery;
 
 impl MyApp {
-    pub(crate) const THUMBNAIL_SIZE: Vec2 = Vec2::new(80.0, 80.0);
+    pub fn get_thumbnail_size(&self) -> Vec2 {
+        Vec2::new(self.thumbnail_size * 10.0, self.thumbnail_size * 10.0)
+    }
 
     pub(crate) fn save_config(&self) {
         let config = AppConfig {
@@ -120,8 +122,13 @@ impl Default for MyApp {
             rename_just_opened: false,
             delete_file_path: None,
             rename_file_path: None,
+            gallery_options: false,
             clipboard: Clipboard::new().unwrap(),
             code: String::from("// Start coding here\nfn main() {\n    println!(\"Hello, world!\");\n}"),
+            thumbnail_size: 8.0,
+            search_active: false,
+            search_query: String::new(),
+            sort_ascending: false,
         }
     }
 }
@@ -129,6 +136,7 @@ impl Default for MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 
+        // hot-keys for app ui
         ctx.input_mut(|i| {
             if i.consume_key(egui::Modifiers::CTRL, egui::Key::Comma) {
                 self.current_view = View::Settings;
@@ -144,6 +152,7 @@ impl eframe::App for MyApp {
             }
         });
 
+        // render the left sidebar
         sidebar_left::render(self, ctx);
 
         if self.rename_file_path.is_some() {
@@ -153,6 +162,12 @@ impl eframe::App for MyApp {
         if self.delete_file_path.is_some() {
             crate::ui::popups::delete_file::render(self, ctx);
         }
+
+        if self.gallery_options{
+            crate::ui::popups::gallery_options::render(self, ctx);
+        }
+
+
 
         // Code editor on the right when SVG is selected
         if let View::Gallery = self.current_view {

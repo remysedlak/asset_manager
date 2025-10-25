@@ -32,7 +32,7 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                         [32.0, 32.0],
                         egui::Button::new(RichText::new("🎨").size(22.0)),
                     )
-                    .on_hover_text("View SVGs")
+                    .on_hover_text("Graphics")
                     .clicked()
                 {
                     app.current_view = View::Gallery;

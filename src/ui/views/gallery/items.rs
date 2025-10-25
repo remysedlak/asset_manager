@@ -5,6 +5,7 @@ use crate::egui::RichText;
 use std::path::PathBuf;
 
 pub fn render(
+    app: &MyApp,
     item: &FileSystemItem,
     ui: &mut egui::Ui,
     navigate_to: &mut Option<String>,
@@ -16,10 +17,11 @@ pub fn render(
 ) {
     match item {
         FileSystemItem::Directory { name, path } => {
-            render_directory(ui, name, path, navigate_to);
+            render_directory(app, ui, name, path, navigate_to);
         }
         FileSystemItem::SvgFile { name, path } => {
             render_svg(
+                app,
                 ui,
                 name,
                 path,
@@ -32,6 +34,7 @@ pub fn render(
         }
         FileSystemItem::FontFile { name, path } => {
             render_font(
+                app,
                 ui,
                 name,
                 path,
@@ -45,19 +48,22 @@ pub fn render(
 }
 
 fn render_directory(
+    app: &MyApp,
     ui: &mut egui::Ui,
     name: &str,
     path: &PathBuf,
     navigate_to: &mut Option<String>,
 ) {
+    let thumbnail_size = app.get_thumbnail_size();
+
     ui.vertical(|ui| {
-        ui.set_width(MyApp::THUMBNAIL_SIZE.x);
-        ui.set_height(MyApp::THUMBNAIL_SIZE.y);
+        ui.set_width(thumbnail_size.x);
+        ui.set_height(thumbnail_size.y);
 
         let button = ui.add(
-            egui::Button::new(RichText::new("📁").size(MyApp::THUMBNAIL_SIZE.y * 0.6))
+            egui::Button::new(RichText::new("📁").size(thumbnail_size.y * 0.6))
                 .corner_radius(10.0)
-                .min_size(MyApp::THUMBNAIL_SIZE),
+                .min_size(thumbnail_size),
         );
 
         if button.double_clicked() {
@@ -69,6 +75,7 @@ fn render_directory(
 }
 
 fn render_svg(
+    app: &MyApp,
     ui: &mut egui::Ui,
     name: &str,
     path: &PathBuf,
@@ -78,12 +85,14 @@ fn render_svg(
     pending_delete: &mut Option<PathBuf>,
     pending_error: &mut Option<String>,
 ) {
+    let thumbnail_size = app.get_thumbnail_size();
+
     ui.vertical(|ui| {
         let img_uri = format!("file://{}", path.display());
         let button = ui.add(
-            egui::Button::new(egui::Image::new(img_uri).fit_to_exact_size(MyApp::THUMBNAIL_SIZE))
-                .fill(egui::Color32::TRANSPARENT)  // Transparent background
-                .stroke(egui::Stroke::NONE)         // No border
+            egui::Button::new(egui::Image::new(img_uri).fit_to_exact_size(thumbnail_size))
+                .fill(egui::Color32::TRANSPARENT)
+                .stroke(egui::Stroke::NONE)
                 .corner_radius(10.0),
         );
 
@@ -108,6 +117,7 @@ fn render_svg(
 }
 
 fn render_font(
+    app: &MyApp,
     ui: &mut egui::Ui,
     name: &str,
     path: &PathBuf,
@@ -116,9 +126,10 @@ fn render_font(
     pending_delete: &mut Option<PathBuf>,
     pending_error: &mut Option<String>,
 ) {
+    let thumbnail_size = app.get_thumbnail_size();
+
     ui.vertical(|ui| {
-        ui.set_width(MyApp::THUMBNAIL_SIZE.x);
-        ui.set_height(MyApp::THUMBNAIL_SIZE.y);
+        ui.set_height(thumbnail_size.y);
 
         let extension = path
             .extension()
@@ -129,10 +140,10 @@ fn render_font(
         let button = ui.add(
             egui::Button::new(
                 RichText::new(format!("🔤\n.{}", extension))
-                    .size(MyApp::THUMBNAIL_SIZE.y * 0.25),
+                    .size(thumbnail_size.y * 0.25),
             )
                 .corner_radius(10.0)
-                .min_size(MyApp::THUMBNAIL_SIZE),
+                .min_size(thumbnail_size),
         );
 
         show_context_menu(
@@ -183,11 +194,10 @@ fn show_context_menu(
             ui.close();
         }
 
-        if ui.button("Open File").clicked() {
+        if ui.button("Open file").clicked() {
             file_actions::reveal_in_explorer(path);
             ui.close();
         }
-
 
         ui.separator();
 

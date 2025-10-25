@@ -71,3 +71,26 @@ pub fn apply_pending_actions(
         app.reset_panel_width = true;
     }
 }
+
+use crate::models::file_items::FileSystemItem;
+
+pub fn sort_items(items: &mut Vec<FileSystemItem>, ascending: bool) {
+    items.sort_by(|a, b| {
+        let name_a = match a {
+            FileSystemItem::Directory { name, .. } => name,
+            FileSystemItem::SvgFile { name, .. } => name,
+            FileSystemItem::FontFile { name, .. } => name,
+        };
+        let name_b = match b {
+            FileSystemItem::Directory { name, .. } => name,
+            FileSystemItem::SvgFile { name, .. } => name,
+            FileSystemItem::FontFile { name, .. } => name,
+        };
+
+        if ascending {
+            name_a.to_lowercase().cmp(&name_b.to_lowercase())
+        } else {
+            name_b.to_lowercase().cmp(&name_a.to_lowercase())
+        }
+    });
+}

@@ -31,4 +31,11 @@ pub struct MyApp {
     pub(crate) clipboard: Clipboard,
     pub(crate) code: String,
     pub(crate) reset_panel_width: bool,
+    pub(crate) gallery_options: bool,
+    pub(crate) thumbnail_size: f32,
+
+    pub(crate) search_active: bool,
+    pub(crate) search_query: String,
+
+    pub(crate) sort_ascending: bool,
 }
