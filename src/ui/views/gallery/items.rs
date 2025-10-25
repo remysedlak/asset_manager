@@ -96,6 +96,16 @@ fn render_svg(
                 .corner_radius(10.0),
         );
 
+        // Add hover effect - border
+        // Add hover effect - dark background with padding
+        if button.hovered() {
+            let padded_rect = button.rect.expand(7.0); // Add 5 pixels of padding on all sides
+            ui.painter().rect_filled(
+                padded_rect,
+                10.0, // corner radius
+                egui::Color32::from_rgba_premultiplied(0, 0, 0, 30), // dark semi-transparent background
+            );
+        }
         if button.clicked() {
             *load_svg = Some(path.clone());
         }
