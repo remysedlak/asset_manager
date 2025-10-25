@@ -1,6 +1,7 @@
 # SVG/Assets Manager
 
-<img width="475" height="428" alt="image" src="https://github.com/user-attachments/assets/7edfe037-8a26-4a8a-94c5-5e526ef49538" />
+<img width="475" height="427" alt="image" src="https://github.com/user-attachments/assets/8c48d598-9ca8-4a4a-93d1-5c16311b177f" />
+
 
 A desktop application for browsing and editing SVG files.
 
