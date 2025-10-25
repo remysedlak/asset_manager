@@ -82,6 +82,8 @@ fn render_svg(
         let img_uri = format!("file://{}", path.display());
         let button = ui.add(
             egui::Button::new(egui::Image::new(img_uri).fit_to_exact_size(MyApp::THUMBNAIL_SIZE))
+                .fill(egui::Color32::TRANSPARENT)  // Transparent background
+                .stroke(egui::Stroke::NONE)         // No border
                 .corner_radius(10.0),
         );
 

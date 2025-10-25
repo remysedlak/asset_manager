@@ -11,9 +11,20 @@ pub fn render(
     display_path: &str,
 ) {
     egui::Frame::new()
-        .fill(egui::Color32::from_rgb(30, 29, 25))  // Custom background color
+        .fill(egui::Color32::from_rgb(30, 29, 25))
         .inner_margin(egui::Margin::same(5))
         .show(ui, |ui| {
+            // Style buttons to be transparent
+            ui.style_mut().visuals.widgets.inactive.corner_radius = egui::CornerRadius::same(10);
+            ui.style_mut().visuals.widgets.hovered.corner_radius = egui::CornerRadius::same(10);
+            ui.style_mut().visuals.widgets.active.corner_radius = egui::CornerRadius::same(10);
+
+            ui.style_mut().visuals.widgets.inactive.bg_fill = egui::Color32::TRANSPARENT;
+            ui.style_mut().visuals.widgets.inactive.weak_bg_fill = egui::Color32::TRANSPARENT;
+
+            ui.style_mut().visuals.widgets.hovered.bg_fill = egui::Color32::from_rgba_premultiplied(255, 255, 255, 20);
+            ui.style_mut().visuals.widgets.active.bg_fill = egui::Color32::from_rgba_premultiplied(255, 255, 255, 30);
+
             ui.horizontal(|ui| {
                 // Back button
                 if !is_at_root {

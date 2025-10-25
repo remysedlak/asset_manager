@@ -160,51 +160,80 @@ impl eframe::App for MyApp {
         // Code editor on the right when SVG is selected
         if let View::Gallery = self.current_view {
             if self.selected_svg.is_some() {
-                crate::ui::svg_overview::render(self, ctx); // Use svg_editor instead
+                crate::ui::svg_overview::render(self, ctx);
             }
         }
 
-        CentralPanel::default().show(ctx, |ui| match self.current_view {
-            View::Settings => {
-                settings::render(self, ui);
-            }
-            View::Gallery => {
-                let (navigate_to, load_svg) = gallery::render(self, ui);
-
-                if let Some(new_path) = navigate_to {
-                    self.navigate_to(new_path);
+        CentralPanel::default()
+            .frame(
+                egui::Frame::default()
+                    .fill(egui::Color32::from_rgb(40, 39, 35))// Match your header color
+                    .inner_margin(egui::Margin::same(0))
+            )
+            .show(ctx, |ui| match self.current_view {
+                View::Settings => {
+                    settings::render(self, ui);
                 }
+                View::Gallery => {
+                    // Render header at top level
+                    let root_path = gallery::helpers::get_root_path(self).clone();
+                    let current_path = self.current_path.clone();
+                    let is_at_root = current_path == root_path;
+                    let display_path = gallery::helpers::calculate_display_path(&current_path, &root_path);
 
-                if let Some(path) = load_svg {
-                    self.load_svg(&path);
-                }
-            }
-            View::Fonts => {
-                let (navigate_to, _load_font) = gallery::render(self, ui);
+                    let mut navigate_to: Option<String> = None;
+                    gallery::header::render(self, ui, &mut navigate_to, is_at_root, &root_path, &display_path);
+                    gallery::header::render_status_messages(self, ui);
 
-                if let Some(new_path) = navigate_to {
-                    self.navigate_to(new_path);
-                }
-            }
-            View::Help => {
-                ui.heading(RichText::from("Help").size(20.0).strong());
-                ui.separator();
-                ui.add_space(10.0);
-                ui.vertical(|ui|{
-                    ui.label(RichText::from("Controls:").size(15.0));
-                });
-            }
-            View::Editor => {
-                // If there's an SVG selected, make sure the code is loaded
-                if self.selected_svg.is_some() && self.svg_code.is_empty() {
-                    // This shouldn't happen, but just in case
-                    if let Some(path) = &self.selected_svg.clone() {
+                    // Render gallery content without header
+                    let (nav, load_svg) = gallery::render_content(self, ui);
+
+                    // Combine navigation from header and content
+                    if let Some(new_path) = navigate_to.or(nav) {
+                        self.navigate_to(new_path);
+                    }
+
+                    if let Some(path) = load_svg {
                         self.load_svg(&path);
                     }
                 }
-                code_editor::render_editor(self, ui);
-            }
-        });
+                View::Fonts => {
+                    // Render header at top level
+                    let root_path = gallery::helpers::get_root_path(self).clone();
+                    let current_path = self.current_path.clone();
+                    let is_at_root = current_path == root_path;
+                    let display_path = gallery::helpers::calculate_display_path(&current_path, &root_path);
+
+                    let mut navigate_to: Option<String> = None;
+                    gallery::header::render(self, ui, &mut navigate_to, is_at_root, &root_path, &display_path);
+                    gallery::header::render_status_messages(self, ui);
+
+                    // Render gallery content without header
+                    let (nav, _load_font) = gallery::render_content(self, ui);
+
+                    if let Some(new_path) = navigate_to.or(nav) {
+                        self.navigate_to(new_path);
+                    }
+                }
+                View::Help => {
+                    ui.heading(RichText::from("Help").size(20.0).strong());
+                    ui.separator();
+                    ui.add_space(10.0);
+                    ui.vertical(|ui|{
+                        ui.label(RichText::from("Controls:").size(15.0));
+                    });
+                }
+                View::Editor => {
+                    // If there's an SVG selected, make sure the code is loaded
+                    if self.selected_svg.is_some() && self.svg_code.is_empty() {
+                        // This shouldn't happen, but just in case
+                        if let Some(path) = &self.selected_svg.clone() {
+                            self.load_svg(&path);
+                        }
+                    }
+                    code_editor::render_editor(self, ui);
+                }
+            });
     }
 
     fn on_exit(&mut self, _gl: Option<&Context>) {
