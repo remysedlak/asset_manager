@@ -86,6 +86,33 @@ fn extract_all_path_data(content: &str) -> Vec<String> {
 fn extract_all_colors(content: &str) -> Vec<String> {
     let mut colors = Vec::new();
 
+    // === Extract colors from CSS classes in <style> blocks ===
+    if let Ok(style_re) = Regex::new(r"<style[^>]*>(.*?)</style>") {
+        if let Some(style_caps) = style_re.captures(content) {
+            let style_content = &style_caps[1];
+
+            // Extract fill and stroke colors from CSS rules
+            if let Ok(fill_re) = Regex::new(r"fill:\s*([^;}\s]+)") {
+                for caps in fill_re.captures_iter(style_content) {
+                    let color_value = caps[1].trim().to_string();
+                    if !color_value.is_empty() && color_value != "none" {
+                        colors.push(color_value);
+                    }
+                }
+            }
+
+            if let Ok(stroke_re) = Regex::new(r"stroke:\s*([^;}\s]+)") {
+                for caps in stroke_re.captures_iter(style_content) {
+                    let color_value = caps[1].trim().to_string();
+                    if !color_value.is_empty() && color_value != "none" {
+                        colors.push(color_value);
+                    }
+                }
+            }
+        }
+    }
+
+    // === Original code for inline attributes ===
     // Attributes that can contain colors
     let color_attrs = ["fill", "stroke", "stop-color", "color", "flood-color", "lighting-color"];
 
@@ -113,7 +140,7 @@ fn extract_all_colors(content: &str) -> Vec<String> {
         }
     }
 
-    // Also extract colors from style attributes
+    // Also extract colors from inline style attributes
     if let Ok(re) = Regex::new(r#"style="([^"]*)""#) {
         for caps in re.captures_iter(content) {
             let style_content = &caps[1];

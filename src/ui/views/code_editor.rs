@@ -23,9 +23,14 @@ pub fn render_editor(app: &mut MyApp, ui: &mut egui::Ui) {
         }
     }
 
-    // Code editor
+    // Reserve space for buttons at the bottom
+    let button_height = if is_svg { 40.0 } else { 0.0 };
+    let available_height = ui.available_height() - button_height;
+
+    // Code editor with fixed height
     ScrollArea::both() // Allow both horizontal and vertical scrolling
         .auto_shrink([false, false])
+        .max_height(available_height)
         .show(ui, |ui| {
             CodeEditor::default()
                 .id_source("code editor")
@@ -34,7 +39,6 @@ pub fn render_editor(app: &mut MyApp, ui: &mut egui::Ui) {
                 .with_theme(ColorTheme::GRUVBOX)
                 .with_syntax(syntax)
                 .with_numlines(true)
-                // Don't set desired_width, let it be natural
                 .show(ui, code_buffer);
         });
 

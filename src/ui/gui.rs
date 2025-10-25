@@ -152,6 +152,11 @@ impl eframe::App for MyApp {
                 self.current_view = View::Settings;
             }
             if i.consume_key(egui::Modifiers::NONE, egui::Key::Escape) {
+
+                if  self.current_view == View::Editor{
+                    self.current_view = View::Gallery;
+                }
+
                 if self.gallery_options && self.search_active {
                     self.gallery_options = false;
                 }
@@ -163,6 +168,8 @@ impl eframe::App for MyApp {
                     self.search_active = false;
                 }
             }
+
+
             if i.consume_key(egui::Modifiers::CTRL, egui::Key::H) {
                 self.current_view = View::Help;
             }
@@ -173,9 +180,10 @@ impl eframe::App for MyApp {
                 self.current_view = View::Fonts;
             }
         });
-
-        // render the left sidebar
-        sidebar_left::render(self, ctx);
+        if self.current_view != View::Editor {
+            // render the left sidebar
+            sidebar_left::render(self, ctx);
+        }
 
         if self.rename_file_path.is_some() {
             crate::ui::popups::rename_file::render(self, ctx);
