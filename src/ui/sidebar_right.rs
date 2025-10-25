@@ -32,7 +32,7 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                     .show(ui, |ui| {
                         // Header with title and close button
                         ui.horizontal(|ui| {
-                            ui.heading(RichText::new("Editor").size(18.0));
+                            ui.heading(RichText::new("Overview").size(18.0).strong());
                             ui.with_layout(egui::Layout::right_to_left(Align::Center), |ui| {
                                 // close sidebar
                                 if ui.button(RichText::new("―").size(14.0)).clicked() {

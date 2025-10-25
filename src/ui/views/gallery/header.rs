@@ -38,11 +38,14 @@ pub fn render(
 
                 // Path display or search bar
                 if app.search_active {
-                    ui.add(
+                    let text_edit = ui.add(
                         egui::TextEdit::singleline(&mut app.search_query)
                             .hint_text("Search files...")
                             .desired_width(300.0)
                     );
+
+                    // Auto-focus when search is activated
+                    text_edit.request_focus();
 
                     if ui.button("x").clicked() {
                         app.search_active = false;
