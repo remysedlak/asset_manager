@@ -1,16 +1,18 @@
 
-use crate::ui::{code_editor, gallery, sidebar_left, settings, help};
-use crate::utils::{config::AppConfig};
+use crate::ui::sidebar_left;
+use crate::ui::views::*;
+use crate::utils::config::AppConfig;
 use arboard::Clipboard;
 use eframe::egui;
 use eframe::glow::Context;
 use egui::{CentralPanel, Vec2};
 use std::fs;
-use std::path::{PathBuf};
+use std::path::PathBuf;
 use std::time::Instant;
 use crate::utils::file_finder::{scan_directory, FileFilter};
 use crate::models::gui::View;
 pub(crate) use crate::models::gui::MyApp;
+use crate::ui::views::gallery;
 
 impl MyApp {
     pub(crate) const THUMBNAIL_SIZE: Vec2 = Vec2::new(80.0, 80.0);
