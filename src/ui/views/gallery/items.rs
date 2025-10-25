@@ -5,7 +5,7 @@ use crate::egui::RichText;
 use std::path::PathBuf;
 
 pub fn render(
-    app: &MyApp,
+    app: &MyApp,  // Changed back to immutable
     item: &FileSystemItem,
     ui: &mut egui::Ui,
     navigate_to: &mut Option<String>,
@@ -14,6 +14,7 @@ pub fn render(
     pending_rename: &mut Option<(PathBuf, String)>,
     pending_delete: &mut Option<PathBuf>,
     pending_error: &mut Option<String>,
+    pending_show_sidebar: &mut bool,  // Add this parameter
 ) {
     match item {
         FileSystemItem::Directory { name, path } => {
@@ -30,6 +31,7 @@ pub fn render(
                 pending_rename,
                 pending_delete,
                 pending_error,
+                pending_show_sidebar,
             );
         }
         FileSystemItem::FontFile { name, path } => {
@@ -84,6 +86,7 @@ fn render_svg(
     pending_rename: &mut Option<(PathBuf, String)>,
     pending_delete: &mut Option<PathBuf>,
     pending_error: &mut Option<String>,
+    pending_show_sidebar: &mut bool,  // Add this parameter
 ) {
     let thumbnail_size = app.get_thumbnail_size();
 
@@ -96,17 +99,17 @@ fn render_svg(
                 .corner_radius(10.0),
         );
 
-        // Add hover effect - border
-        // Add hover effect - dark background with padding
         if button.hovered() {
-            let padded_rect = button.rect.expand(7.0); // Add 5 pixels of padding on all sides
+            let padded_rect = button.rect.expand(7.0);
             ui.painter().rect_filled(
                 padded_rect,
-                10.0, // corner radius
-                egui::Color32::from_rgba_premultiplied(0, 0, 0, 30), // dark semi-transparent background
+                10.0,
+                egui::Color32::from_rgba_premultiplied(0, 0, 0, 30),
             );
         }
+
         if button.clicked() {
+            *pending_show_sidebar = true;  // Set flag instead of mutating app
             *load_svg = Some(path.clone());
         }
 

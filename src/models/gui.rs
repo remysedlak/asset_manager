@@ -38,5 +38,6 @@ pub struct MyApp {
     pub(crate) search_active: bool,
     pub(crate) search_query: String,
 
+    pub(crate) show_sidebar_right: bool,
     pub(crate) sort_ascending: bool,
 }

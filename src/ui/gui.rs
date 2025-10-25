@@ -125,6 +125,7 @@ impl Default for MyApp {
             current_font_input: font_path,
             selected_svg: None,
             svg_code: String::new(),
+            show_sidebar_right: true,
             error_message: None,
             error_message_time: None,
             current_view: View::Gallery,
@@ -151,6 +152,11 @@ impl eframe::App for MyApp {
             if i.consume_key(egui::Modifiers::CTRL, egui::Key::Comma) {
                 self.current_view = View::Settings;
             }
+
+            if i.consume_key(egui::Modifiers::CTRL, egui::Key::I) {
+                self.show_sidebar_right = !self.show_sidebar_right
+            }
+
             if i.consume_key(egui::Modifiers::NONE, egui::Key::Escape) {
 
                 if  self.current_view == View::Editor{
@@ -201,7 +207,7 @@ impl eframe::App for MyApp {
 
         // Code editor on the right when SVG is selected
         if let View::Gallery = self.current_view {
-            if self.selected_svg.is_some() {
+            if self.selected_svg.is_some() && self.show_sidebar_right {
                 crate::ui::sidebar_right::render(self, ctx);
             }
         }

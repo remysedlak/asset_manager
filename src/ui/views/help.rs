@@ -35,20 +35,25 @@ pub fn render(_app: &mut MyApp, ui: &mut egui::Ui) {
                             ui.label(RichText::new("Shortcut").strong());
                             ui.end_row();
 
-                            // Hotkey rows
-                            ui.label("Graphic Gallery");
-                            ui.label(RichText::new("Ctrl + G").monospace());
-                            ui.end_row();
+                                ui.label("Font library");
+                                ui.label(RichText::new("Ctrl + F").monospace());
+                                ui.end_row();
 
-                            ui.label("Font Library");
-                            ui.label(RichText::new("Ctrl + F").monospace());
+                            // Hotkey rows
+                            ui.label("Graphic gallery");
+                            ui.label(RichText::new("Ctrl + G").monospace());
                             ui.end_row();
 
                             ui.label("Help");
                             ui.label(RichText::new("Ctrl + H").monospace());
                             ui.end_row();
 
-                            ui.label("Settings");
+                                ui.label("Close right sidebar");
+                                ui.label(RichText::new("Ctrl + I").monospace());
+                                ui.end_row();
+
+
+                                ui.label("Settings");
                             ui.label(RichText::new("Ctrl + ,").monospace());
                             ui.end_row();
                         });

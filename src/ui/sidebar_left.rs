@@ -5,6 +5,7 @@ use egui::{RichText, SidePanel};
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {
     SidePanel::left("my_left_panel")
         .exact_width(54.0)
+        .resizable(false)
         .frame(egui::Frame::default().inner_margin(egui::Margin::same(5)).fill(egui::Color32::from_rgb(30, 29, 25)))
         .show(ctx, |ui| {
             // Set button corner_radius
@@ -53,6 +54,22 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                     app.current_view = View::Fonts;
                     app.refresh_directory();
                 }
+                //  @@TODO: pull SVG and Fonts from the web
+                // ui.add_space(8.0);
+                //
+                //
+                // if ui
+                //     .add_sized(
+                //         [32.0, 32.0],
+                //         egui::Button::new(RichText::new("🌐").size(22.0)),
+                //     )
+                //     .on_hover_text("cURL")
+                //     .clicked()
+                // {
+                //
+                //     app.current_view = View::Help;
+                //     app.vault_path_input = app.vault_path.clone();
+                // }
             });
 
             // Spacer to push bottom buttons down
@@ -82,11 +99,13 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                     .on_hover_text("Help")
                     .clicked()
                 {
+
                     app.current_view = View::Help;
                     app.vault_path_input = app.vault_path.clone();
                 }
 
                 ui.add_space(8.0);
+
             });
         });
 }
