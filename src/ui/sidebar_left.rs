@@ -1,15 +1,11 @@
 use crate::models::gui::View;
-use crate::ui::gui::MyApp;
+use crate::models::gui::MyApp;
 use egui::{RichText, SidePanel};
 
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {
     SidePanel::left("my_left_panel")
         .exact_width(54.0)
-        .frame(
-            egui::Frame::default()
-                .inner_margin(egui::Margin::same(5))
-                .fill(egui::Color32::from_rgb(30, 29, 25)),
-        )
+        .frame(egui::Frame::default().inner_margin(egui::Margin::same(5)).fill(egui::Color32::from_rgb(30, 29, 25)))
         .show(ctx, |ui| {
             // Set button corner_radius
             ui.style_mut().visuals.widgets.inactive.corner_radius = egui::CornerRadius::same(10);
@@ -21,8 +17,10 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
             ui.style_mut().visuals.widgets.inactive.weak_bg_fill = egui::Color32::TRANSPARENT;
 
             // Optional: customize hover and active states
-            ui.style_mut().visuals.widgets.hovered.bg_fill = egui::Color32::from_rgba_premultiplied(255, 255, 255, 20);
-            ui.style_mut().visuals.widgets.active.bg_fill = egui::Color32::from_rgba_premultiplied(255, 255, 255, 30);
+            ui.style_mut().visuals.widgets.hovered.bg_fill =
+                egui::Color32::from_rgba_premultiplied(255, 255, 255, 20);
+            ui.style_mut().visuals.widgets.active.bg_fill =
+                egui::Color32::from_rgba_premultiplied(255, 255, 255, 30);
 
             // Top buttons
             ui.vertical_centered(|ui| {
@@ -73,9 +71,6 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                     app.current_view = View::Settings;
                     app.vault_path_input = app.vault_path.clone();
                 }
-
-
-
 
                 ui.add_space(8.0);
                 // Help View

@@ -1,37 +1,16 @@
-use crate::models::file_items::FileSystemItem;
-use crate::ui::{code_editor, gallery, toolbar, settings};
+
+use crate::ui::{code_editor, gallery, sidebar_left, settings, help};
 use crate::utils::{config::AppConfig};
 use arboard::Clipboard;
 use eframe::egui;
 use eframe::glow::Context;
-use egui::{CentralPanel, RichText, Vec2};
+use egui::{CentralPanel, Vec2};
 use std::fs;
 use std::path::{PathBuf};
 use std::time::Instant;
 use crate::utils::file_finder::{scan_directory, FileFilter};
 use crate::models::gui::View;
-
-pub struct MyApp {
-    pub(crate) grid_reset_counter: usize,
-    pub(crate) vault_path: String,
-    pub(crate) current_path: String,
-    pub(crate) font_path: String,
-    pub(crate) vault_path_input: String,
-    pub(crate) current_font_input: String,
-    pub(crate) current_items: Vec<FileSystemItem>,
-    pub(crate) selected_svg: Option<PathBuf>,
-    pub(crate) svg_code: String,
-    pub(crate) error_message: Option<String>,
-    pub(crate) error_message_time: Option<Instant>,
-    pub(crate) rename_file_path: Option<PathBuf>,
-    pub(crate) rename_input: String,
-    pub(crate) rename_just_opened: bool,
-    pub(crate) current_view: View,
-    pub(crate) delete_file_path: Option<PathBuf>,
-    clipboard: Clipboard,
-    pub(crate) code: String,
-    pub(crate) reset_panel_width: bool,
-}
+pub(crate) use crate::models::gui::MyApp;
 
 impl MyApp {
     pub(crate) const THUMBNAIL_SIZE: Vec2 = Vec2::new(80.0, 80.0);
@@ -147,7 +126,23 @@ impl Default for MyApp {
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        toolbar::render(self, ctx);
+
+        ctx.input_mut(|i| {
+            if i.consume_key(egui::Modifiers::CTRL, egui::Key::Comma) {
+                self.current_view = View::Settings;
+            }
+            if i.consume_key(egui::Modifiers::CTRL, egui::Key::Questionmark) {
+                self.current_view = View::Help;
+            }
+            if i.consume_key(egui::Modifiers::CTRL, egui::Key::G) {
+                self.current_view = View::Gallery;
+            }
+            if i.consume_key(egui::Modifiers::CTRL, egui::Key::F) {
+                self.current_view = View::Fonts;
+            }
+        });
+
+        sidebar_left::render(self, ctx);
 
         if self.rename_file_path.is_some() {
             crate::ui::popups::rename_file::render(self, ctx);
@@ -160,7 +155,7 @@ impl eframe::App for MyApp {
         // Code editor on the right when SVG is selected
         if let View::Gallery = self.current_view {
             if self.selected_svg.is_some() {
-                crate::ui::svg_overview::render(self, ctx);
+                crate::ui::sidebar_right::render(self, ctx);
             }
         }
 
@@ -216,12 +211,7 @@ impl eframe::App for MyApp {
                     }
                 }
                 View::Help => {
-                    ui.heading(RichText::from("Help").size(20.0).strong());
-                    ui.separator();
-                    ui.add_space(10.0);
-                    ui.vertical(|ui|{
-                        ui.label(RichText::from("Controls:").size(15.0));
-                    });
+                    help::render(self, ui);
                 }
                 View::Editor => {
                     // If there's an SVG selected, make sure the code is loaded

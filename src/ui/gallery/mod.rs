@@ -3,7 +3,7 @@ pub mod grid;
 pub mod items;
 pub mod helpers;
 
-use crate::ui::gui::MyApp;
+use crate::models::gui::MyApp;
 use std::path::PathBuf;
 
 // Main render function - includes header

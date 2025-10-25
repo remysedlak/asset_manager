@@ -1,4 +1,4 @@
-use crate::ui::gui::MyApp;
+use crate::models::gui::MyApp;
 use std::fs;
 
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {

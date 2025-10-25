@@ -1,4 +1,4 @@
-use crate::ui::gui::MyApp;
+use crate::models::gui::MyApp;
 use crate::models::gui::View;
 use std::path::PathBuf;
 

@@ -1,6 +1,6 @@
 use crate::egui::text::CCursorRange;
 use crate::egui::text::CCursor;
-use crate::ui::gui::MyApp;
+use crate::models::gui::MyApp;
 use crate::models::file_items::FileSystemItem;
 use std::fs;
 

@@ -1,5 +1,5 @@
 use crate::models::file_items::FileSystemItem;
-use crate::ui::gui::MyApp;
+use crate::models::gui::MyApp;
 use crate::utils::file_actions;
 use crate::egui::RichText;
 use std::path::PathBuf;
@@ -168,7 +168,14 @@ fn show_context_menu(
             ui.close();
         }
 
-        if ui.button("Copy File").clicked() {
+        if ui.button("Rename").clicked() {
+            *pending_rename = Some((path.clone(), name.to_string()));
+            ui.close();
+        }
+
+        ui.separator();
+
+        if ui.button("Copy").clicked() {
             match file_actions::copy_file_to_clipboard(path) {
                 Ok(_) => *pending_error = Some("✅ File copied to clipboard".to_string()),
                 Err(e) => *pending_error = Some(format!("Failed to copy file: {}", e)),
@@ -176,15 +183,13 @@ fn show_context_menu(
             ui.close();
         }
 
-        if ui.button("Rename").clicked() {
-            *pending_rename = Some((path.clone(), name.to_string()));
-            ui.close();
-        }
-
-        if ui.button("File Explorer").clicked() {
+        if ui.button("Open File").clicked() {
             file_actions::reveal_in_explorer(path);
             ui.close();
         }
+
+
+        ui.separator();
 
         if ui.button("Delete").clicked() {
             *pending_delete = Some(path.clone());

@@ -1,5 +1,5 @@
 use crate::models::gui::View;
-use crate::ui::gui::MyApp;
+use crate::models::gui::MyApp;
 use crate::utils::svg_parser;
 use egui::{Align, RichText, ScrollArea, SidePanel};
 use std::fs;
