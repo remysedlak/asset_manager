@@ -1,4 +1,4 @@
-# SVG Asset Manager
+# SVG/Assets Manager
 
 A desktop application for browsing and editing SVG files.
 
