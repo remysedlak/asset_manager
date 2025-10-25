@@ -151,6 +151,18 @@ impl eframe::App for MyApp {
             if i.consume_key(egui::Modifiers::CTRL, egui::Key::Comma) {
                 self.current_view = View::Settings;
             }
+            if i.consume_key(egui::Modifiers::NONE, egui::Key::Escape) {
+                if self.gallery_options && self.search_active {
+                    self.gallery_options = false;
+                }
+
+                else if self.gallery_options && !self.search_active {
+                    self.gallery_options = false;
+                }
+                else if !self.gallery_options && self.search_active {
+                    self.search_active = false;
+                }
+            }
             if i.consume_key(egui::Modifiers::CTRL, egui::Key::H) {
                 self.current_view = View::Help;
             }
