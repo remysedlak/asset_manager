@@ -25,4 +25,5 @@ A desktop application for browsing and editing SVG files.
 
 So much more to come.
 
-<img width="875" height="728" alt="image" src="https://github.com/user-attachments/assets/1d950a3e-37fd-4e5c-b30e-f347abb18cdf" />
+<img width="875" height="728" alt="image" src="https://github.com/user-attachments/assets/e6c7bffe-c5a1-4b8b-bc29-857bcb0cefaa" />
+
