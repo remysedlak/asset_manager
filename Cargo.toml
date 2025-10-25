@@ -17,3 +17,4 @@ rfd = "0.14"
 
 # Use the latest from git
 egui_code_editor = { git = "https://github.com/p4ymak/egui_code_editor", branch = "main" }
+regex = "1.12.2"

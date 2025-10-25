@@ -2,6 +2,7 @@ use crate::models::gui::View;
 use crate::ui::gui::MyApp;
 use crate::utils::svg_parser;
 use egui::{Align, RichText, ScrollArea, SidePanel};
+use std::fs;
 
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {
     // Reset panel width if flagged
@@ -136,7 +137,7 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                                             });
                                         }
 
-                                        // Colors
+                                        // Colors with color picker
                                         if !svg_info.colors_used.is_empty() {
                                             ui.add_space(4.0);
 
@@ -145,40 +146,93 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                                                     RichText::new("🎨 Colors:")
                                                         .color(egui::Color32::from_rgb(150, 150, 150)),
                                                 );
-                                                ui.add_space(8.0);
+                                            });
 
-                                                egui::Grid::new("color_grid")
-                                                    .spacing([4.0, 4.0])
-                                                    .show(ui, |ui| {
-                                                        for (idx, color) in svg_info.colors_used.iter().take(12).enumerate() {
-                                                            let color32 = egui::Color32::from_rgb(
-                                                                color.red,
-                                                                color.green,
-                                                                color.blue,
-                                                            );
+                                            ui.add_space(4.0);
 
-                                                            let color_box = egui::Frame::new()
-                                                                .fill(color32)
-                                                                .corner_radius(4.0)
-                                                                .stroke(egui::Stroke::new(
-                                                                    1.0,
-                                                                    egui::Color32::from_rgb(100, 100, 100),
-                                                                ))
-                                                                .show(ui, |ui| {
-                                                                    ui.set_min_size(egui::Vec2::new(24.0, 24.0));
-                                                                });
+                                            egui::Grid::new("color_grid")
+                                                .spacing([6.0, 6.0])
+                                                .show(ui, |ui| {
+                                                    for (idx, color) in svg_info.colors_used.iter().take(12).enumerate() {
+                                                        let mut color32 = egui::Color32::from_rgb(
+                                                            color.red,
+                                                            color.green,
+                                                            color.blue,
+                                                        );
 
-                                                            color_box.response.on_hover_text(format!(
-                                                                "rgb({}, {}, {})",
-                                                                color.red, color.green, color.blue
-                                                            ));
+                                                        let original_color = color.clone();
 
-                                                            if (idx + 1) % 4 == 0 {
-                                                                ui.end_row();
+                                                        // Add color picker button
+                                                        if egui::color_picker::color_edit_button_srgba(
+                                                            ui,
+                                                            &mut color32,
+                                                            egui::color_picker::Alpha::Opaque
+                                                        ).changed() {
+                                                            // Color changed - update the SVG file
+                                                            if let Some(svg_path) = &app.selected_svg.clone() {
+                                                                // First, forget the cached image
+                                                                let img_uri = format!("file://{}", svg_path.display());
+                                                                ctx.forget_image(&img_uri);
+
+                                                                if let Ok(svg_content) = fs::read_to_string(svg_path) {
+                                                                    // Generate all possible representations of the old color
+                                                                    let old_hex_lower = format!(
+                                                                        "#{:02x}{:02x}{:02x}",
+                                                                        original_color.red,
+                                                                        original_color.green,
+                                                                        original_color.blue
+                                                                    );
+                                                                    let old_hex_upper = old_hex_lower.to_uppercase();
+                                                                    let old_rgb = format!(
+                                                                        "rgb({},{},{})",
+                                                                        original_color.red,
+                                                                        original_color.green,
+                                                                        original_color.blue
+                                                                    );
+                                                                    let old_rgb_spaces = format!(
+                                                                        "rgb({}, {}, {})",
+                                                                        original_color.red,
+                                                                        original_color.green,
+                                                                        original_color.blue
+                                                                    );
+
+                                                                    // Generate new color in hex format
+                                                                    let new_color_hex = format!(
+                                                                        "#{:02x}{:02x}{:02x}",
+                                                                        color32.r(),
+                                                                        color32.g(),
+                                                                        color32.b()
+                                                                    );
+
+                                                                    // Replace all instances of old color with new color
+                                                                    let updated_content = svg_content
+                                                                        .replace(&old_hex_lower, &new_color_hex)
+                                                                        .replace(&old_hex_upper, &new_color_hex)
+                                                                        .replace(&old_rgb, &new_color_hex)
+                                                                        .replace(&old_rgb_spaces, &new_color_hex);
+
+                                                                    // Save the updated SVG
+                                                                    if let Err(e) = fs::write(svg_path, &updated_content) {
+                                                                        app.set_error_message(format!("Failed to save SVG: {}", e));
+                                                                    } else {
+                                                                        // Update the svg_code in memory
+                                                                        app.svg_code = updated_content;
+
+                                                                        // Show success message
+                                                                        app.set_error_message("✅ Color updated!".to_string());
+
+                                                                        // Request repaint to refresh preview
+                                                                        ctx.request_repaint();
+                                                                    }
+                                                                }
                                                             }
                                                         }
-                                                    });
-                                            });
+
+                                                        if (idx + 1) % 4 == 0 {
+                                                            ui.end_row();
+                                                        }
+                                                    }
+                                                });
 
                                             if svg_info.colors_used.len() > 12 {
                                                 ui.label(
@@ -198,6 +252,34 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                                 ui.add_space(8.0);
                             }
                         }
+                        // Preview section
+                        ui.label(RichText::new("Preview:").strong().size(14.0));
+                        ui.add_space(4.0);
+
+                        egui::Frame::new()
+                            .fill(egui::Color32::from_rgb(35, 39, 42))
+                            .inner_margin(egui::Margin::same(16))
+                            .corner_radius(6.0)
+                            .show(ui, |ui| {
+                                ScrollArea::both()
+                                    .id_salt("preview_scroll")
+                                    .max_height(200.0)
+                                    .show(ui, |ui| {
+                                        if let Some(svg_path) = &app.selected_svg {
+                                            let img_uri = format!("file://{}", svg_path.display());
+                                            ui.add(
+                                                egui::Image::new(img_uri)
+                                                    .max_width(200.0)
+                                                    .shrink_to_fit()
+                                            );
+                                        }
+                                    });
+                            });
+
+
+                        ui.add_space(12.0);
+                        ui.separator();
+                        ui.add_space(8.0);
 
                         // Code editor section
                         ui.label(RichText::new("Code:").strong().size(14.0));
@@ -241,33 +323,7 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                             });
                         });
 
-                        ui.add_space(12.0);
-                        ui.separator();
-                        ui.add_space(8.0);
 
-                        // Preview section
-                        ui.label(RichText::new("Preview:").strong().size(14.0));
-                        ui.add_space(4.0);
-
-                        egui::Frame::new()
-                            .fill(egui::Color32::from_rgb(35, 39, 42))
-                            .inner_margin(egui::Margin::same(16))
-                            .corner_radius(6.0)
-                            .show(ui, |ui| {
-                                ScrollArea::both()
-                                    .id_salt("preview_scroll")
-                                    .max_height(200.0)
-                                    .show(ui, |ui| {
-                                        if let Some(svg_path) = &app.selected_svg {
-                                            let img_uri = format!("file://{}", svg_path.display());
-                                            ui.add(
-                                                egui::Image::new(img_uri)
-                                                    .max_width(200.0)
-                                                    .shrink_to_fit()
-                                            );
-                                        }
-                                    });
-                            });
                     });
             } else {
                 app.selected_svg = None;

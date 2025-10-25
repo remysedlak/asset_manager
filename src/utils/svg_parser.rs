@@ -1,6 +1,7 @@
 use svgtypes::{Color, ViewBox, PathParser};
 use std::path::Path;
 use std::str::FromStr;
+use regex::Regex;
 
 pub struct SvgInfo {
     pub width: Option<String>,
@@ -39,7 +40,12 @@ pub fn parse_svg_info(svg_path: &Path) -> Result<SvgInfo, Box<dyn std::error::Er
 
     // Extract colors
     let mut colors_used = Vec::new();
-    for color_str in extract_colors(&svg_content) {
+    for color_str in extract_all_colors(&svg_content) {
+        // Skip "none", "inherit", "currentColor", and other non-color values
+        if color_str == "none" || color_str == "inherit" || color_str == "currentColor" {
+            continue;
+        }
+
         if let Ok(color) = Color::from_str(&color_str) {
             if !colors_used.contains(&color) {
                 colors_used.push(color);
@@ -58,11 +64,10 @@ pub fn parse_svg_info(svg_path: &Path) -> Result<SvgInfo, Box<dyn std::error::Er
 }
 
 fn extract_attribute(content: &str, attr: &str) -> Option<String> {
-    let pattern = format!("{}=\"", attr);
-    if let Some(start) = content.find(&pattern) {
-        let value_start = start + pattern.len();
-        if let Some(end) = content[value_start..].find('"') {
-            return Some(content[value_start..value_start + end].to_string());
+    let pattern = format!(r#"{}="([^"]*)""#, attr);
+    if let Ok(re) = Regex::new(&pattern) {
+        if let Some(caps) = re.captures(content) {
+            return Some(caps[1].to_string());
         }
     }
     None
@@ -70,20 +75,63 @@ fn extract_attribute(content: &str, attr: &str) -> Option<String> {
 
 fn extract_all_path_data(content: &str) -> Vec<String> {
     let mut paths = Vec::new();
-    for line in content.lines() {
-        if let Some(d_attr) = extract_attribute(line, "d") {
-            paths.push(d_attr);
+    if let Ok(re) = Regex::new(r#"<path[^>]*\sd="([^"]*)""#) {
+        for caps in re.captures_iter(content) {
+            paths.push(caps[1].to_string());
         }
     }
     paths
 }
 
-fn extract_colors(content: &str) -> Vec<String> {
+fn extract_all_colors(content: &str) -> Vec<String> {
     let mut colors = Vec::new();
-    for attr in &["fill", "stroke", "stop-color", "color"] {
-        if let Some(color) = extract_attribute(content, attr) {
-            colors.push(color);
+
+    // Attributes that can contain colors
+    let color_attrs = ["fill", "stroke", "stop-color", "color", "flood-color", "lighting-color"];
+
+    for attr in &color_attrs {
+        // Match attribute="value" pattern
+        let pattern = format!(r#"{}="([^"]*)""#, attr);
+        if let Ok(re) = Regex::new(&pattern) {
+            for caps in re.captures_iter(content) {
+                let color_value = caps[1].trim().to_string();
+                if !color_value.is_empty() && color_value != "none" {
+                    colors.push(color_value);
+                }
+            }
+        }
+
+        // Also match attribute='value' pattern (single quotes)
+        let pattern_single = format!(r#"{}='([^']*)'"#, attr);
+        if let Ok(re) = Regex::new(&pattern_single) {
+            for caps in re.captures_iter(content) {
+                let color_value = caps[1].trim().to_string();
+                if !color_value.is_empty() && color_value != "none" {
+                    colors.push(color_value);
+                }
+            }
         }
     }
+
+    // Also extract colors from style attributes
+    if let Ok(re) = Regex::new(r#"style="([^"]*)""#) {
+        for caps in re.captures_iter(content) {
+            let style_content = &caps[1];
+
+            // Extract colors from CSS properties within style
+            for attr in &color_attrs {
+                let css_pattern = format!(r"{}:\s*([^;]+)", attr);
+                if let Ok(css_re) = Regex::new(&css_pattern) {
+                    for css_caps in css_re.captures_iter(style_content) {
+                        let color_value = css_caps[1].trim().to_string();
+                        if !color_value.is_empty() && color_value != "none" {
+                            colors.push(color_value);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     colors
 }

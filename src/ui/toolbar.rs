@@ -4,7 +4,7 @@ use egui::{SidePanel, RichText};
 
 pub fn render(app: &mut MyApp, ctx: &egui::Context) {
     SidePanel::left("my_left_panel")
-        .exact_width(60.0)
+        .exact_width(54.0)
         .frame(egui::Frame::default()
             .inner_margin(egui::Margin::same(5))
             .fill(ctx.style().visuals.panel_fill))
@@ -15,12 +15,12 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
             ui.style_mut().visuals.widgets.active.corner_radius = egui::CornerRadius::same(10);
 
             ui.vertical_centered(|ui| {
-                ui.add_space(10.0);
+                ui.add_space(8.0);
 
                 // SVG View
                 if ui
                     .add_sized(
-                        [40.0, 40.0],
+                        [32.0, 32.0],
                         egui::Button::new(RichText::new("🎨").size(28.0)),
                     )
                     .on_hover_text("View SVGs")
@@ -31,12 +31,12 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                 }
                 ui.label(RichText::from("svg").size(12.0));
 
-                ui.add_space(10.0);
+                ui.add_space(8.0);
 
                 // Font View
                 if ui
                     .add_sized(
-                        [40.0, 40.0],
+                        [32.0, 32.0],
                         egui::Button::new(RichText::new("α").size(28.0)),
                     )
                     .on_hover_text("Fonts")
@@ -47,12 +47,12 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                 }
                 ui.label(RichText::from("fonts").size(12.0));
 
-                ui.add_space(10.0);
+                ui.add_space(8.0);
 
                 // Settings View
                 if ui
                     .add_sized(
-                        [40.0, 40.0],
+                        [32.0, 32.0],
                         egui::Button::new(RichText::new("⚙").size(20.0)),
                     )
                     .on_hover_text("Settings")
@@ -63,12 +63,12 @@ pub fn render(app: &mut MyApp, ctx: &egui::Context) {
                 }
                 ui.label(RichText::from("settings").size(12.0));
 
-                ui.add_space(10.0);
+                ui.add_space(8.0);
 
                 // Help View
                 if ui
                     .add_sized(
-                        [40.0, 40.0],
+                        [32.0, 32.0],
                         egui::Button::new(RichText::new("?").size(28.0)),
                     )
                     .on_hover_text("Help")
