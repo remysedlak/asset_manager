@@ -1,8 +1,10 @@
-mod svg_overview;
-mod toolbar;
+
+pub mod toolbar;
 pub mod gui;
-mod gallery;
+pub mod settings;
+pub mod code_editor;
+pub mod svg_overview;
 pub mod popups;
 pub mod help;
-mod settings;
-mod code_editor;
+
+pub mod gallery;
