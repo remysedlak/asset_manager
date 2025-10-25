@@ -3,6 +3,7 @@ use std::time::Instant;
 use arboard::Clipboard;
 use crate::models::FileSystemItem;
 
+#[derive(PartialEq)]
 pub enum View {
     Gallery,
     Settings,

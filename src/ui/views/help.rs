@@ -45,7 +45,7 @@ pub fn render(_app: &mut MyApp, ui: &mut egui::Ui) {
                             ui.end_row();
 
                             ui.label("Help");
-                            ui.label(RichText::new("Ctrl + ?").monospace());
+                            ui.label(RichText::new("Ctrl + H").monospace());
                             ui.end_row();
 
                             ui.label("Settings");

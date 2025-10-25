@@ -15,20 +15,27 @@ fn is_valid_utf8_file(path: &std::path::PathBuf) -> bool {
 pub fn scan_directory(path: &str, filter: FileFilter) -> Result<Vec<FileSystemItem>, std::io::Error> {
     let mut items = Vec::new();
 
-    // Scan directories
-    ScanDir::dirs().read(path, |iter| {
+    // Scan directories - handle errors gracefully
+    if let Err(e) = ScanDir::dirs().read(path, |iter| {
         for (entry, name) in iter {
             items.push(FileSystemItem::Directory {
                 name: name.clone(),
                 path: entry.path(),
             });
         }
-    }).unwrap();
+    }) {
+        // Return error if we can't read the directory at all
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("Failed to scan directory '{}': {}", path, e)
+        ));
+    }
 
     // Scan files based on filter
     match filter {
         FileFilter::Svg => {
-            ScanDir::files().read(path, |iter| {
+            // If file scanning fails, just skip it (we already got directories)
+            let _ = ScanDir::files().read(path, |iter| {
                 for (entry, name) in iter {
                     if name.ends_with(".svg") {
                         // Only include SVG files with valid UTF-8 content
@@ -41,10 +48,11 @@ pub fn scan_directory(path: &str, filter: FileFilter) -> Result<Vec<FileSystemIt
                         // Silently skip files with invalid UTF-8
                     }
                 }
-            }).unwrap();
+            });
         }
         FileFilter::Font => {
-            ScanDir::files().read(path, |iter| {
+            // If file scanning fails, just skip it (we already got directories)
+            let _ = ScanDir::files().read(path, |iter| {
                 for (entry, name) in iter {
                     let name_lower = name.to_lowercase();
                     if name_lower.ends_with(".ttf")
@@ -57,7 +65,7 @@ pub fn scan_directory(path: &str, filter: FileFilter) -> Result<Vec<FileSystemIt
                         });
                     }
                 }
-            }).unwrap();
+            });
         }
     }
 

@@ -22,7 +22,8 @@ impl MyApp {
     pub(crate) fn save_config(&self) {
         let config = AppConfig {
             vault_path: self.vault_path.clone(),
-            font_path: self.font_path.clone()
+            font_path: self.font_path.clone(),
+            thumbnail_size: self.thumbnail_size
         };
         config.save();
     }
@@ -102,7 +103,16 @@ impl Default for MyApp {
         let config = AppConfig::load();
         let vault_path = config.vault_path.clone();
         let font_path = config.font_path.clone();
-        let current_items = scan_directory(&vault_path, FileFilter::Svg).unwrap_or_default();
+        let thumbnail_size = config.thumbnail_size;
+
+        // Only scan directory if path is valid, otherwise use empty vec
+        let current_items = if config.is_valid() {
+            scan_directory(&vault_path, FileFilter::Svg).unwrap_or_default()
+        } else {
+            Vec::new()
+        };
+
+
 
         Self {
             grid_reset_counter: 0,
@@ -125,7 +135,7 @@ impl Default for MyApp {
             gallery_options: false,
             clipboard: Clipboard::new().unwrap(),
             code: String::from("// Start coding here\nfn main() {\n    println!(\"Hello, world!\");\n}"),
-            thumbnail_size: 8.0,
+            thumbnail_size,
             search_active: false,
             search_query: String::new(),
             sort_ascending: false,
@@ -141,7 +151,7 @@ impl eframe::App for MyApp {
             if i.consume_key(egui::Modifiers::CTRL, egui::Key::Comma) {
                 self.current_view = View::Settings;
             }
-            if i.consume_key(egui::Modifiers::CTRL, egui::Key::Questionmark) {
+            if i.consume_key(egui::Modifiers::CTRL, egui::Key::H) {
                 self.current_view = View::Help;
             }
             if i.consume_key(egui::Modifiers::CTRL, egui::Key::G) {
