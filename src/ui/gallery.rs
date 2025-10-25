@@ -23,6 +23,33 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
 
     let is_at_root = app.current_path == *root_path;
 
+    // Calculate relative path for display
+    let display_path = if let Ok(relative) = std::path::Path::new(&app.current_path)
+        .strip_prefix(root_path)
+    {
+        if relative.as_os_str().is_empty() {
+            // At root, show just the folder name
+            std::path::Path::new(root_path)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(root_path)
+                .to_string()
+        } else {
+            // Show relative path from root
+            format!(
+                "{}/{}",
+                std::path::Path::new(root_path)
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or(""),
+                relative.display()
+            )
+        }
+    } else {
+        // Fallback to full path if strip_prefix fails
+        app.current_path.clone()
+    };
+
     // Header
     ui.horizontal(|ui| {
         if !is_at_root {
@@ -33,7 +60,7 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
                 }
             }
         }
-        ui.label(RichText::from(&app.current_path).size(20.0));
+        ui.label(RichText::from(&display_path).size(20.0));
     });
 
     ui.separator();
