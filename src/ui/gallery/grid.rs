@@ -18,6 +18,7 @@ pub fn render(
     let num_columns = (available_width / item_width).floor().max(1.0) as usize;
 
     ScrollArea::vertical()
+
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysVisible)
         .show(ui, |ui| {
             ui.add_space(10.0);

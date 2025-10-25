@@ -23,8 +23,6 @@ pub fn render(app: &mut MyApp, ui: &mut egui::Ui) -> (Option<String>, Option<Pat
     // Render header with navigation and controls
     header::render(app, ui, &mut navigate_to, is_at_root, &root_path, &display_path);
 
-    ui.separator();
-
     // Render status messages
     header::render_status_messages(app, ui);
 
