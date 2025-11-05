@@ -1,8 +1,7 @@
 use crate::models::gui::MyApp;
-use egui::{RichText};
+use egui::RichText;
 
 pub fn render(_app: &mut MyApp, ui: &mut egui::Ui) {
-
     // Add padding and center content
     egui::Frame::new()
         .inner_margin(egui::Margin::symmetric(40, 30))
@@ -35,25 +34,29 @@ pub fn render(_app: &mut MyApp, ui: &mut egui::Ui) {
                             ui.label(RichText::new("Shortcut").strong());
                             ui.end_row();
 
-                                ui.label("Font library");
-                                ui.label(RichText::new("Ctrl + F").monospace());
-                                ui.end_row();
+                            ui.label("Font library");
+                            ui.label(RichText::new("Ctrl + T").monospace());
+                            ui.end_row();
 
                             // Hotkey rows
                             ui.label("Graphic gallery");
                             ui.label(RichText::new("Ctrl + G").monospace());
                             ui.end_row();
 
+                            // Hotkey rows
+                            ui.label("Open Search");
+                            ui.label(RichText::new("Ctrl + F").monospace());
+                            ui.end_row();
+
                             ui.label("Help");
                             ui.label(RichText::new("Ctrl + H").monospace());
                             ui.end_row();
 
-                                ui.label("Close right sidebar");
-                                ui.label(RichText::new("Ctrl + I").monospace());
-                                ui.end_row();
+                            ui.label("Close right sidebar");
+                            ui.label(RichText::new("Ctrl + I").monospace());
+                            ui.end_row();
 
-
-                                ui.label("Settings");
+                            ui.label("Settings");
                             ui.label(RichText::new("Ctrl + ,").monospace());
                             ui.end_row();
                         });

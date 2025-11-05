@@ -157,6 +157,12 @@ impl eframe::App for MyApp {
                 self.show_sidebar_right = !self.show_sidebar_right
             }
 
+            if self.current_view == View::Gallery || self.current_view == View::Fonts {
+                if i.consume_key(egui::Modifiers::CTRL, egui::Key::F) {
+                    self.search_active = !self.search_active
+                }
+            }
+
             if i.consume_key(egui::Modifiers::NONE, egui::Key::Escape) {
 
                 if  self.current_view == View::Editor{
@@ -182,7 +188,7 @@ impl eframe::App for MyApp {
             if i.consume_key(egui::Modifiers::CTRL, egui::Key::G) {
                 self.current_view = View::Gallery;
             }
-            if i.consume_key(egui::Modifiers::CTRL, egui::Key::F) {
+            if i.consume_key(egui::Modifiers::CTRL, egui::Key::T) {
                 self.current_view = View::Fonts;
             }
         });
